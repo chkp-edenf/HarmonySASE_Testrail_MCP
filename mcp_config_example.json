@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "testrail": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "TESTRAIL_URL=https://your-instance.testrail.io",
+        "-e", "TESTRAIL_USER=your-email@company.com",
+        "-e", "TESTRAIL_API_KEY=${input:testrail_api_token}",
+        "testrail_mcp"
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "testrail_api_token",
+      "description": "TestRail API token"
+    }
+  ]
+}
