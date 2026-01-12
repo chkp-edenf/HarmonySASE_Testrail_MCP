@@ -1,0 +1,20 @@
+# Ignore everything by default
+/*
+
+# Except these files and directories
+!/.gitignore
+!/src/
+!/Dockerfile
+!/requirements.txt
+!/README.md
+!/USER_GUIDE.md
+!/mcp_config_example.json
+
+# Ensure hidden files in allowed directories are included if needed
+!/src/**
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
