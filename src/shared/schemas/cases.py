@@ -38,6 +38,17 @@ class GetCasesInput(BaseModel):
     project_id: str = Field(..., description="Project ID")
     suite_id: Optional[str] = Field(None, description="Suite ID (optional)")
     limit: Optional[str] = Field("250", description="Max results (default 250)")
+    
+    # Advanced filtering parameters (v1.4.0)
+    created_by: Optional[str] = Field(None, description="Filter by user ID who created the case")
+    created_after: Optional[str] = Field(None, description="Unix timestamp - cases created after this date")
+    created_before: Optional[str] = Field(None, description="Unix timestamp - cases created before this date")
+    updated_by: Optional[str] = Field(None, description="Filter by user ID who last updated")
+    updated_after: Optional[str] = Field(None, description="Unix timestamp - cases updated after this date")
+    updated_before: Optional[str] = Field(None, description="Unix timestamp - cases updated before this date")
+    priority_id: Optional[str] = Field(None, description="Filter by priority IDs (comma-separated for multiple)")
+    type_id: Optional[str] = Field(None, description="Filter by case type IDs (comma-separated for multiple)")
+    milestone_id: Optional[str] = Field(None, description="Filter by milestone IDs (comma-separated for multiple)")
 
 
 class GetCaseInput(BaseModel):

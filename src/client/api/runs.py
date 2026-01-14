@@ -10,11 +10,31 @@ class RunsClient:
     def __init__(self, client: BaseAPIClient):
         self._client = client
     
-    async def get_runs(self, project_id: int, limit: int = 250, filters: Optional[dict] = None) -> dict:
-        """Get test runs for a project"""
+    async def get_runs(
+        self,
+        project_id: int,
+        limit: int = 250,
+        # Advanced filtering parameters (v1.4.0)
+        created_by: Optional[int] = None,
+        created_after: Optional[int] = None,
+        created_before: Optional[int] = None,
+        milestone_id: Optional[str] = None,
+        is_completed: Optional[bool] = None
+    ) -> dict:
+        """Get test runs for a project with optional advanced filtering"""
         params = {"limit": limit}
-        if filters:
-            params.update(filters)
+        
+        # Add advanced filter parameters if provided
+        if created_by is not None:
+            params["created_by"] = created_by
+        if created_after is not None:
+            params["created_after"] = created_after
+        if created_before is not None:
+            params["created_before"] = created_before
+        if milestone_id is not None:
+            params["milestone_id"] = milestone_id
+        if is_completed is not None:
+            params["is_completed"] = 1 if is_completed else 0
         
         result = await self._client.get(f"get_runs/{project_id}", params=params)
         

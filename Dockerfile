@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 # Metadata
 LABEL maintainer="<your-org> QA Team 'TestRail MCP Contributors'"
-LABEL version="1.1.0"
+LABEL version="1.5.0"
 LABEL description="TestRail MCP server"
 
 # Create non-root user

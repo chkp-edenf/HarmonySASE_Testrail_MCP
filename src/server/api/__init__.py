@@ -26,12 +26,25 @@ from .runs import (
     handle_get_runs, handle_get_run, handle_add_run, handle_update_run,
     handle_close_run, handle_delete_run
 )
+from .plans import (
+    handle_get_plans, handle_get_plan, handle_add_plan, handle_update_plan,
+    handle_close_plan, handle_delete_plan,
+    handle_add_plan_entry, handle_update_plan_entry, handle_delete_plan_entry
+)
 from .results import (
     handle_get_results, handle_get_results_for_case, handle_get_results_for_run,
     handle_add_result, handle_add_results
 )
 from .case_fields import handle_get_case_fields, handle_get_case_types, handle_get_priorities
 from .statuses import handle_get_statuses
+from .users import handle_get_users, handle_get_user, handle_get_user_by_email
+from .milestones import (
+    handle_get_milestones, handle_get_milestone, handle_add_milestone,
+    handle_update_milestone, handle_delete_milestone
+)
+from .configs import (
+    handle_get_configs, handle_add_config_group, handle_add_config
+)
 from .health import handle_get_server_health
 
 
@@ -89,6 +102,17 @@ def get_tool_handlers() -> dict[str, ToolHandler]:
         "close_run": handle_close_run,
         "delete_run": handle_delete_run,
         
+        # Plans
+        "get_plans": handle_get_plans,
+        "get_plan": handle_get_plan,
+        "add_plan": handle_add_plan,
+        "update_plan": handle_update_plan,
+        "close_plan": handle_close_plan,
+        "delete_plan": handle_delete_plan,
+        "add_plan_entry": handle_add_plan_entry,
+        "update_plan_entry": handle_update_plan_entry,
+        "delete_plan_entry": handle_delete_plan_entry,
+        
         # Results
         "get_results": handle_get_results,
         "get_results_for_case": handle_get_results_for_case,
@@ -101,6 +125,23 @@ def get_tool_handlers() -> dict[str, ToolHandler]:
         "get_case_types": handle_get_case_types,
         "get_priorities": handle_get_priorities,
         "get_statuses": handle_get_statuses,
+        
+        # Users
+        "get_users": handle_get_users,
+        "get_user": handle_get_user,
+        "get_user_by_email": handle_get_user_by_email,
+        
+        # Milestones
+        "get_milestones": handle_get_milestones,
+        "get_milestone": handle_get_milestone,
+        "add_milestone": handle_add_milestone,
+        "update_milestone": handle_update_milestone,
+        "delete_milestone": handle_delete_milestone,
+        
+        # Configurations
+        "get_configs": handle_get_configs,
+        "add_config_group": handle_add_config_group,
+        "add_config": handle_add_config,
         
         # Health
         "get_server_health": handle_get_server_health,
@@ -141,6 +182,15 @@ __all__ = [
     "handle_update_run",
     "handle_close_run",
     "handle_delete_run",
+    "handle_get_plans",
+    "handle_get_plan",
+    "handle_add_plan",
+    "handle_update_plan",
+    "handle_close_plan",
+    "handle_delete_plan",
+    "handle_add_plan_entry",
+    "handle_update_plan_entry",
+    "handle_delete_plan_entry",
     "handle_get_results",
     "handle_get_results_for_case",
     "handle_get_results_for_run",
@@ -150,6 +200,17 @@ __all__ = [
     "handle_get_case_types",
     "handle_get_priorities",
     "handle_get_statuses",
+    "handle_get_users",
+    "handle_get_user",
+    "handle_get_user_by_email",
+    "handle_get_milestones",
+    "handle_get_milestone",
+    "handle_add_milestone",
+    "handle_update_milestone",
+    "handle_delete_milestone",
+    "handle_get_configs",
+    "handle_add_config_group",
+    "handle_add_config",
     "handle_get_server_health",
 ]
 

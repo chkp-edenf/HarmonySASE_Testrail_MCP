@@ -7,9 +7,13 @@ from .sections import SectionsClient
 from .cases import CasesClient
 from .tests import TestsClient
 from .runs import RunsClient
+from .plans import PlansClient
 from .results import ResultsClient
 from .case_fields import CaseFieldsClient
 from .statuses import StatusesClient
+from .users import UsersClient
+from .milestones import MilestonesClient
+from .configs import ConfigsClient
 from .exceptions import (
     TestRailError,
     TestRailAPIError,
@@ -37,9 +41,13 @@ class TestRailClient(BaseAPIClient):
         self.cases = CasesClient(self)
         self.tests = TestsClient(self)
         self.runs = RunsClient(self)
+        self.plans = PlansClient(self)
         self.results = ResultsClient(self)
         self.case_fields = CaseFieldsClient(self)
         self.statuses = StatusesClient(self)
+        self.users = UsersClient(self)
+        self.milestones = MilestonesClient(self)
+        self.configs = ConfigsClient(self)
 
 
 __all__ = [

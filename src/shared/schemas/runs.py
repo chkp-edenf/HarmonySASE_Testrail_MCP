@@ -42,6 +42,25 @@ class RunsResponse(PaginatedResponse):
     runs: List[Run] = Field(default_factory=list)
 
 
+# Input schemas for MCP tool validation
+class GetRunsInput(BaseModel):
+    """Input schema for getting test runs"""
+    project_id: str = Field(..., description="Project ID")
+    limit: Optional[str] = Field("250", description="Max results (default 250)")
+    
+    # Advanced filtering parameters (v1.4.0)
+    created_by: Optional[str] = Field(None, description="Filter by user ID who created the run")
+    created_after: Optional[str] = Field(None, description="Unix timestamp - runs created after this date")
+    created_before: Optional[str] = Field(None, description="Unix timestamp - runs created before this date")
+    milestone_id: Optional[str] = Field(None, description="Filter by milestone IDs (comma-separated for multiple)")
+    is_completed: Optional[str] = Field(None, description="Filter by completion status (true/false)")
+
+
+class GetRunInput(BaseModel):
+    """Input schema for getting a specific test run"""
+    run_id: str = Field(..., description="Test run ID")
+
+
 class AddRunPayload(BaseModel):
     """Payload for creating a new test run"""
     name: str = Field(..., description="Test run name (required)")

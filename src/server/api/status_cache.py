@@ -96,7 +96,10 @@ def resolve_status(status_value: str) -> int:
     Raises:
         ValueError: If status cannot be resolved or cache is invalid
     """
+    from .metrics import record_cache_hit, record_cache_miss
+    
     if not is_cache_valid():
+        record_cache_miss()
         raise ValueError(
             "Status cache not initialized. Call get_statuses first or ensure cache is populated."
         )
@@ -106,8 +109,10 @@ def resolve_status(status_value: str) -> int:
         status_id = int(status_value)
         # Verify it exists in our cache
         if status_id in _status_cache["id_to_name"]:
+            record_cache_hit()
             return status_id
         else:
+            record_cache_miss()
             raise ValueError(f"Status ID {status_id} not found in TestRail")
     except (ValueError, TypeError):
         pass
@@ -117,9 +122,11 @@ def resolve_status(status_value: str) -> int:
         normalized = status_value.lower().strip()
         
         if normalized in _status_cache["name_to_id"]:
+            record_cache_hit()
             return _status_cache["name_to_id"][normalized]
     
     # If we get here, we couldn't resolve it
+    record_cache_miss()
     available = ", ".join(sorted(set(_status_cache["name_to_id"].keys())))
     raise ValueError(
         f"Cannot resolve status '{status_value}'. Available: {available}"

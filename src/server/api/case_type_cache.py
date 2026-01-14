@@ -78,7 +78,10 @@ def update_cache(case_types: list):
 
 def resolve_case_type(type_value: str) -> int:
     """Resolve case type name or ID to numeric ID using cache"""
+    from .metrics import record_cache_hit, record_cache_miss
+    
     if not is_cache_valid():
+        record_cache_miss()
         raise ValueError(
             "Case type cache not initialized. Call get_case_types first."
         )
@@ -87,8 +90,10 @@ def resolve_case_type(type_value: str) -> int:
     try:
         type_id = int(type_value)
         if type_id in _case_type_cache["id_to_name"]:
+            record_cache_hit()
             return type_id
         else:
+            record_cache_miss()
             raise ValueError(f"Case type ID {type_id} not found")
     except (ValueError, TypeError):
         pass
@@ -97,8 +102,10 @@ def resolve_case_type(type_value: str) -> int:
     if isinstance(type_value, str):
         normalized = type_value.lower().strip()
         if normalized in _case_type_cache["name_to_id"]:
+            record_cache_hit()
             return _case_type_cache["name_to_id"][normalized]
     
+    record_cache_miss()
     available = ", ".join(sorted(set(_case_type_cache["name_to_id"].keys())))
     raise ValueError(
         f"Cannot resolve case type '{type_value}'. Available: {available}"

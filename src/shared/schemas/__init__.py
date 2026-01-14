@@ -3,6 +3,13 @@
 from .common import PaginatedResponse, ErrorResponse, SuccessResponse
 from .projects import Project, ProjectsResponse, GetProjectsInput
 from .suites import Suite, GetSuitesInput, GetSuiteInput
+from .configs import (
+    Config,
+    ConfigGroup,
+    GetConfigsInput,
+    AddConfigGroupInput,
+    AddConfigInput
+)
 from .cases import (
     TestCase,
     CasesResponse,
@@ -27,6 +34,13 @@ from .runs import (
     RunsResponse,
     AddRunPayload,
     UpdateRunPayload
+)
+from .plans import (
+    Plan,
+    PlanEntry,
+    PlansResponse,
+    AddPlanPayload,
+    UpdatePlanPayload
 )
 from .results import (
     Result,
@@ -57,6 +71,12 @@ __all__ = [
     "Suite",
     "GetSuitesInput",
     "GetSuiteInput",
+    # Configs
+    "Config",
+    "ConfigGroup",
+    "GetConfigsInput",
+    "AddConfigGroupInput",
+    "AddConfigInput",
     # Cases
     "TestCase",
     "CasesResponse",
@@ -83,6 +103,12 @@ __all__ = [
     "RunsResponse",
     "AddRunPayload",
     "UpdateRunPayload",
+    # Plans
+    "Plan",
+    "PlanEntry",
+    "PlansResponse",
+    "AddPlanPayload",
+    "UpdatePlanPayload",
     # Results
     "Result",
     "ResultsResponse",
