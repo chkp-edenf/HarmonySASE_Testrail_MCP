@@ -59,8 +59,16 @@ def update_cache(field_map: dict, required_fields: list):
 
 def get_field_mapping(field_name: str) -> dict:
     """Get mapping for a specific field from cache"""
+    from .metrics import record_cache_hit, record_cache_miss
+    
     if is_cache_valid():
-        return _field_mappings_cache["fields"].get(field_name, {})
+        result = _field_mappings_cache["fields"].get(field_name, {})
+        if result:
+            record_cache_hit()
+        else:
+            record_cache_miss()
+        return result
+    record_cache_miss()
     return {}
 
 

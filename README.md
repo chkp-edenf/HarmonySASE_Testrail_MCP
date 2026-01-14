@@ -2,7 +2,7 @@
 
 **Connect AI assistants to your TestRail instance**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](reference/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](reference/CHANGELOG.md)
 [![MCP Protocol](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
 
@@ -12,7 +12,7 @@
 
 ## 🌟 Highlights
 
-- 🎯 **40 Complete Tools** - Full CRUD for projects, suites, sections, cases, runs, tests, and results
+- 🎯 **61 Complete Tools** - Full CRUD for projects, suites, sections, cases, runs, tests, results, plans, users, milestones, and configurations
 - 🌍 **100% Portable** - Works with ANY TestRail instance (no hardcoded custom fields!)
 - 🧠 **Smart Field Handling** - Say "Regression" instead of memorizing numeric IDs  
 - ⚡ **Auto Rate-Limited** - Built-in throttling (180 req/min) protects your API quota
@@ -49,7 +49,7 @@ You → "Create 10 test cases for the login flow with priority Critical"
 You ← "Created 10 test cases in section 'Login Tests'"
 ```
 
-The Model Context Protocol (MCP) is a standard that lets AI assistants securely call external tools. This server implements 40 TestRail tools that your AI can use—no TestRail expertise required!
+The Model Context Protocol (MCP) is a standard that lets AI assistants securely call external tools. This server implements 61 TestRail tools that your AI can use—no TestRail expertise required!
 
 ### Why Use This vs TestRail UI?
 
@@ -66,7 +66,7 @@ The Model Context Protocol (MCP) is a standard that lets AI assistants securely 
 
 This MCP server was created to solve real workflow friction experienced by QA teams managing large test suites. After watching testers spend hours on repetitive TestRail tasks, we built a better way.
 
-**Version 1.1.0** introduces full portability—works with any TestRail instance without code changes. See [CHANGELOG](reference/CHANGELOG.md) for details.
+**Version 1.5.0** adds Users (3), Milestones (5), and Configurations (3) support for enhanced team collaboration and multi-platform testing, bringing total tools to 61. See [CHANGELOG](reference/CHANGELOG.md) for details.
 
 ---
 
@@ -203,7 +203,7 @@ Add to your AI client's MCP config (Claude Desktop example):
 ## 🛠️ Available Tools
 
 <details>
-<summary><strong>40 Tools Organized by Category</strong></summary>
+<summary><strong>61 Tools Organized by Category</strong></summary>
 
 ### Projects (2 tools)
 - `get_projects` - List all projects
@@ -235,10 +235,30 @@ Add to your AI client's MCP config (Claude Desktop example):
 - `get_results`, `get_results_for_case`, `get_results_for_run` - Query results
 - `add_result`, `add_results` - Record test outcomes
 
-### Metadata (5 tools)
+### Test Plans (9 tools)
+- `get_plans`, `get_plan` - View test plans
+- `add_plan`, `update_plan`, `close_plan`, `delete_plan` - Manage test plans
+- `add_plan_entry`, `update_plan_entry`, `delete_plan_entry` - Manage plan entries (test runs within plans)
+
+### Users (3 tools)
+- `get_users` - List all users (with optional active filter)
+- `get_user` - Get user by ID
+- `get_user_by_email` - Lookup user by email
+
+### Milestones (5 tools)
+- `get_milestones`, `get_milestone` - View milestones
+- `add_milestone`, `update_milestone`, `delete_milestone` - Manage release cycles and sprint tracking
+
+### Configurations (3 tools)
+- `get_configs` - List configuration groups for multi-platform testing
+- `add_config_group` - Create config groups (Browsers, OS, Devices)
+- `add_config` - Add configurations to groups
+
+### Metadata & Health (5 tools)
 - `get_case_fields` - **Run this first!** (discovers custom fields, populates 3 caches)
 - `get_statuses` - View test statuses (populates status cache)
 - `get_case_types`, `get_priorities` - View case types and priorities
+- `get_server_health` - Monitor server health, cache status, and rate limiter stats
 
 </details>
 
@@ -257,7 +277,7 @@ Add to your AI client's MCP config (Claude Desktop example):
          │
 ┌────────▼────────┐
 │   MCP Server    │  (This project - Docker container)
-│   40 Tools      │
+│   61 Tools      │
 └────────┬────────┘
          │ HTTP + Auth
          │
@@ -329,7 +349,7 @@ This MCP server follows security best practices:
 
 ## 🧪 Testing
 
-Comprehensive test suite with **Makefile orchestration** for fast, organized testing:
+Comprehensive test suite with **61 test scripts** (one per tool) and **Makefile orchestration** for fast, organized testing:
 
 ```bash
 # Quick validation (3 critical tests, ~5s)
@@ -343,12 +363,13 @@ make test-metadata
 make test-cases
 ```
 
-**43 test scripts** organized by category:
+**61 test scripts** organized by category:
 - Metadata (priorities, statuses, case types, fields)
 - Projects, Suites, Sections
 - Test Cases (CRUD + bulk operations)
-- Test Runs & Tests
+- Test Runs, Plans & Tests
 - Results
+- Users, Milestones, Configurations
 
 **Features:**
 - ⚡ **76% faster** than running individual tests (single container approach)
@@ -362,21 +383,30 @@ make test-cases
 
 ## 🗺️ Roadmap
 
-### ✅ v1.1.0 (Current - Released Jan 9, 2026)
-- 100% Portable (no hardcoded custom fields)
-- Generic custom_fields parameter
-- Auto field type detection
+### ✅ v1.5.0 (Current - Released Jan 14, 2026)
+- **Users & Roles API** - 3 new tools for user management and assignment workflows
+- **Milestones API** - 5 new tools for release management and timeline tracking
+- **Configurations API** - 3 new tools for multi-platform testing support
+- 61 total tools covering ~87% of TestRail API v2
+- Enhanced documentation with comprehensive use cases and examples
 
-### 🔮 Coming Next (v1.2.0 - Q1 2026)
-- Health check tool (`get_server_health`)
-- Advanced filtering (created_after, updated_by, etc.)
-- Retry logic for transient failures
+### ✅ v1.4.0 (Released Jan 14, 2026)
+- **Advanced Filtering** - Date ranges, user filters, priority/type/milestone filtering
+- **Automatic Retry Logic** - Exponential backoff for transient failures
+- **Enhanced Health Monitoring** - Comprehensive operational metrics
+
+### ✅ v1.3.0 (Released Jan 13, 2026)
+- **Plan Entries Support** - 3 new tools for managing test runs within plans
+
+### ✅ v1.2.0 (Released Jan 13, 2026)
+- **Test Plans Support** - 6 new tools for complete CRUD operations
+
+### ✅ v1.1.0 (Released Jan 9, 2026)
+- **100% Portable** - No hardcoded custom fields, works with any TestRail instance
 
 ### 🌟 Future (v2.0+)
-- Users & Roles API
-- Attachments support
-- Test Plans & Milestones
-- Configurations (multi-platform testing)
+- Attachments support for test cases and results
+- Advanced analytics and reporting
 
 **See [FEATURE_COVERAGE.md](reference/FEATURE_COVERAGE.md) for detailed roadmap**
 

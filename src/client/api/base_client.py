@@ -35,10 +35,10 @@ class ClientConfig(BaseModel):
 class BaseAPIClient:
     """Base HTTP client with authentication and error handling"""
     
-    # Retry configuration for GET requests only
+    # Retry configuration for GET requests only (v1.4.0)
+    # Exponential backoff: 1s → 2s → 4s for transient failures
     MAX_RETRIES = 3
     INITIAL_RETRY_DELAY = 1.0  # seconds
-    MAX_RETRY_DELAY = 10.0     # seconds
     RETRY_BACKOFF_FACTOR = 2.0
     
     def __init__(self, config: ClientConfig, rate_limiter=None):
@@ -80,6 +80,13 @@ class BaseAPIClient:
         params: Optional[Dict[str, Any]] = None
     ) -> Any:
         """Make authenticated API request with error handling, rate limiting, and retry logic for GET requests"""
+        # Import metrics tracking
+        try:
+            from ...server.api.metrics import record_request_success, record_request_failure
+            metrics_available = True
+        except ImportError:
+            metrics_available = False
+        
         # Apply rate limiting if configured
         if self.rate_limiter:
             await self.rate_limiter.acquire()
@@ -114,23 +121,28 @@ class BaseAPIClient:
                 
                 response.raise_for_status()
                 
+                # Record successful request
+                if metrics_available:
+                    record_request_success()
+                
                 if response.text and response.text.strip():
                     return response.json()
                 return []
                     
             except httpx.TimeoutException as e:
-                logger.error(f" Timeout on {method} {endpoint}")
+                logger.error(f"⏱️ Timeout on {method} {endpoint}")
                 last_exception = TestRailTimeoutError(f"Request timed out after {self.config.timeout}s")
                 
                 # Retry on timeout for GET requests only
                 if should_retry and attempt < max_attempts - 1:
-                    retry_delay = min(
-                        self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt),
-                        self.MAX_RETRY_DELAY
-                    )
-                    print(f"Retry attempt {attempt + 1}/{self.MAX_RETRIES} after {retry_delay}s for {method} {endpoint}", file=sys.stderr)
+                    retry_delay = self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt)
+                    print(f"[RETRY] Attempt {attempt + 1}/{self.MAX_RETRIES} failed: TimeoutException. Retrying in {retry_delay}s...", file=sys.stderr)
                     await asyncio.sleep(retry_delay)
                     continue
+                
+                # Record failure before raising
+                if metrics_available:
+                    record_request_failure()
                 raise last_exception
                 
             except httpx.HTTPStatusError as e:
@@ -168,16 +180,10 @@ class BaseAPIClient:
                                 retry_delay = float(retry_after)
                             except ValueError:
                                 # If Retry-After is not a number, use exponential backoff
-                                retry_delay = min(
-                                    self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt),
-                                    self.MAX_RETRY_DELAY
-                                )
+                                retry_delay = self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt)
                         else:
-                            retry_delay = min(
-                                self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt),
-                                self.MAX_RETRY_DELAY
-                            )
-                        print(f"Retry attempt {attempt + 1}/{self.MAX_RETRIES} after {retry_delay}s for {method} {endpoint} (rate limited)", file=sys.stderr)
+                            retry_delay = self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt)
+                        print(f"[RETRY] Attempt {attempt + 1}/{self.MAX_RETRIES} failed: 429 Too Many Requests. Retrying in {retry_delay}s...", file=sys.stderr)
                         await asyncio.sleep(retry_delay)
                         continue
                     raise last_exception
@@ -186,18 +192,17 @@ class BaseAPIClient:
                     
                     # Retry on server errors for GET requests only
                     if should_retry and attempt < max_attempts - 1:
-                        retry_delay = min(
-                            self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt),
-                            self.MAX_RETRY_DELAY
-                        )
-                        print(f"Retry attempt {attempt + 1}/{self.MAX_RETRIES} after {retry_delay}s for {method} {endpoint} (server error)", file=sys.stderr)
+                        retry_delay = self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt)
+                        print(f"[RETRY] Attempt {attempt + 1}/{self.MAX_RETRIES} failed: {status} Server Error. Retrying in {retry_delay}s...", file=sys.stderr)
                         await asyncio.sleep(retry_delay)
                         continue
                     raise last_exception
                 else:
                     last_exception = TestRailAPIError(status, f"API error: {error_message}", error_data)
                 
-                # For non-retryable HTTP errors, raise immediately
+                # Record failure before raising for non-retryable HTTP errors
+                if metrics_available:
+                    record_request_failure()
                 raise last_exception
             
             except httpx.NetworkError as e:
@@ -206,13 +211,14 @@ class BaseAPIClient:
                 
                 # Retry on network errors for GET requests only
                 if should_retry and attempt < max_attempts - 1:
-                    retry_delay = min(
-                        self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt),
-                        self.MAX_RETRY_DELAY
-                    )
-                    print(f"Retry attempt {attempt + 1}/{self.MAX_RETRIES} after {retry_delay}s for {method} {endpoint} (network error)", file=sys.stderr)
+                    retry_delay = self.INITIAL_RETRY_DELAY * (self.RETRY_BACKOFF_FACTOR ** attempt)
+                    print(f"[RETRY] Attempt {attempt + 1}/{self.MAX_RETRIES} failed: NetworkError. Retrying in {retry_delay}s...", file=sys.stderr)
                     await asyncio.sleep(retry_delay)
                     continue
+                
+                # Record failure before raising
+                if metrics_available:
+                    record_request_failure()
                 raise last_exception
                 
             except TestRailError:
@@ -221,10 +227,14 @@ class BaseAPIClient:
                 
             except Exception as e:
                 logger.error(f"Unexpected error on {method} {endpoint}: {str(e)}")
+                if metrics_available:
+                    record_request_failure()
                 raise TestRailError(f"Unexpected error: {str(e)}")
         
         # Should not reach here, but raise last exception if we do
         if last_exception:
+            if metrics_available:
+                record_request_failure()
             raise last_exception
     
     async def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:

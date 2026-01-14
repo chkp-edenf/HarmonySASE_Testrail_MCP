@@ -25,6 +25,44 @@ class ResultsResponse(PaginatedResponse):
     results: List[Result] = Field(default_factory=list)
 
 
+# Input schemas for MCP tool validation
+class GetResultsInput(BaseModel):
+    """Input schema for getting test results"""
+    test_id: str = Field(..., description="Test ID")
+    limit: Optional[str] = Field("250", description="Max results (default 250)")
+    
+    # Advanced filtering parameters (v1.4.0)
+    created_by: Optional[str] = Field(None, description="Filter by user ID who created the result")
+    created_after: Optional[str] = Field(None, description="Unix timestamp - results created after this date")
+    created_before: Optional[str] = Field(None, description="Unix timestamp - results created before this date")
+    status_id: Optional[str] = Field(None, description="Filter by status IDs (comma-separated for multiple)")
+
+
+class GetResultsForCaseInput(BaseModel):
+    """Input schema for getting results for a case in a run"""
+    run_id: str = Field(..., description="Test run ID")
+    case_id: str = Field(..., description="Test case ID")
+    limit: Optional[str] = Field("250", description="Max results (default 250)")
+    
+    # Advanced filtering parameters (v1.4.0)
+    created_by: Optional[str] = Field(None, description="Filter by user ID who created the result")
+    created_after: Optional[str] = Field(None, description="Unix timestamp - results created after this date")
+    created_before: Optional[str] = Field(None, description="Unix timestamp - results created before this date")
+    status_id: Optional[str] = Field(None, description="Filter by status IDs (comma-separated for multiple)")
+
+
+class GetResultsForRunInput(BaseModel):
+    """Input schema for getting all results for a run"""
+    run_id: str = Field(..., description="Test run ID")
+    limit: Optional[str] = Field("250", description="Max results (default 250)")
+    
+    # Advanced filtering parameters (v1.4.0)
+    created_by: Optional[str] = Field(None, description="Filter by user ID who created the result")
+    created_after: Optional[str] = Field(None, description="Unix timestamp - results created after this date")
+    created_before: Optional[str] = Field(None, description="Unix timestamp - results created before this date")
+    status_id: Optional[str] = Field(None, description="Filter by status IDs (comma-separated for multiple)")
+
+
 class AddResultPayload(BaseModel):
     """Payload for adding a test result"""
     status_id: int = Field(..., description="Status ID (required)")

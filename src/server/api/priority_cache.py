@@ -81,7 +81,10 @@ def update_cache(priorities: list):
 
 def resolve_priority(priority_value: str) -> int:
     """Resolve priority name or ID to numeric ID using cache"""
+    from .metrics import record_cache_hit, record_cache_miss
+    
     if not is_cache_valid():
+        record_cache_miss()
         raise ValueError(
             "Priority cache not initialized. Call get_priorities first."
         )
@@ -90,8 +93,10 @@ def resolve_priority(priority_value: str) -> int:
     try:
         priority_id = int(priority_value)
         if priority_id in _priority_cache["id_to_name"]:
+            record_cache_hit()
             return priority_id
         else:
+            record_cache_miss()
             raise ValueError(f"Priority ID {priority_id} not found")
     except (ValueError, TypeError):
         pass
@@ -100,8 +105,10 @@ def resolve_priority(priority_value: str) -> int:
     if isinstance(priority_value, str):
         normalized = priority_value.lower().strip()
         if normalized in _priority_cache["name_to_id"]:
+            record_cache_hit()
             return _priority_cache["name_to_id"][normalized]
     
+    record_cache_miss()
     available = ", ".join(sorted(set(_priority_cache["name_to_id"].keys())))
     raise ValueError(
         f"Cannot resolve priority '{priority_value}'. Available: {available}"

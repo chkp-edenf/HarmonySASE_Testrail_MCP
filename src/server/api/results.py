@@ -36,14 +36,27 @@ def format_result(result: dict) -> str:
 
 
 async def handle_get_results(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get results for a test"""
+    """Get results for a test with optional advanced filtering"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
         test_id = int(arguments["test_id"])
         limit = int(arguments.get("limit", "250"))
         
-        result = await client.results.get_results(test_id, limit)
+        # Advanced filter parameters (v1.4.0)
+        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
+        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
+        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
+        status_id = arguments.get("status_id")
+        
+        result = await client.results.get_results(
+            test_id,
+            limit,
+            created_by=created_by,
+            created_after=created_after,
+            created_before=created_before,
+            status_id=status_id
+        )
         results = result.get("results", [])
         
         if not results:
@@ -74,7 +87,7 @@ async def handle_get_results(arguments: dict, client: TestRailClient) -> list[Te
 
 
 async def handle_get_results_for_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get results for a case in a run"""
+    """Get results for a case in a run with optional advanced filtering"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
@@ -82,7 +95,21 @@ async def handle_get_results_for_case(arguments: dict, client: TestRailClient) -
         case_id = int(arguments["case_id"])
         limit = int(arguments.get("limit", "250"))
         
-        result = await client.results.get_results_for_case(run_id, case_id, limit)
+        # Advanced filter parameters (v1.4.0)
+        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
+        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
+        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
+        status_id = arguments.get("status_id")
+        
+        result = await client.results.get_results_for_case(
+            run_id,
+            case_id,
+            limit,
+            created_by=created_by,
+            created_after=created_after,
+            created_before=created_before,
+            status_id=status_id
+        )
         results = result.get("results", [])
         
         if not results:
@@ -113,14 +140,27 @@ async def handle_get_results_for_case(arguments: dict, client: TestRailClient) -
 
 
 async def handle_get_results_for_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get all results for a run"""
+    """Get all results for a run with optional advanced filtering"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
         run_id = int(arguments["run_id"])
         limit = int(arguments.get("limit", "250"))
         
-        result = await client.results.get_results_for_run(run_id, limit)
+        # Advanced filter parameters (v1.4.0)
+        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
+        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
+        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
+        status_id = arguments.get("status_id")
+        
+        result = await client.results.get_results_for_run(
+            run_id,
+            limit,
+            created_by=created_by,
+            created_after=created_after,
+            created_before=created_before,
+            status_id=status_id
+        )
         results = result.get("results", [])
         
         if not results:

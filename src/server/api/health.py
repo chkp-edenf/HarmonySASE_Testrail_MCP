@@ -6,6 +6,7 @@ from mcp.types import TextContent
 from ...client.api import TestRailClient
 from . import field_cache, status_cache, priority_cache, case_type_cache
 from .rate_limiter import rate_limiter
+from .metrics import get_all_metrics
 from .utils import create_success_response, create_error_response
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ async def handle_get_server_health(arguments: dict, client: TestRailClient) -> l
     - Cache status for all 4 cache modules
     - Rate limiter statistics
     - Connection readiness
+    - Operational metrics (uptime, requests, cache hit/miss, error rates, timing)
     """
     logger.info("Checking server health")
     
@@ -54,21 +56,32 @@ async def handle_get_server_health(arguments: dict, client: TestRailClient) -> l
             "current_tokens": rate_stats.get("available_requests", 0),
             "max_tokens": rate_stats.get("max_requests", 180),
             "capacity_percent": round(
-                (rate_stats.get("available_requests", 0) / rate_stats.get("max_requests", 180)) * 100, 
+                (rate_stats.get("available_requests", 0) / rate_stats.get("max_requests", 180)) * 100,
                 2
             )
         }
+        
+        # Get operational metrics
+        metrics = get_all_metrics()
         
         # Determine overall health status
         all_caches_loaded = all(cache["loaded"] for cache in caches.values())
         status = "healthy" if all_caches_loaded else "degraded"
         
-        # Build health data response
+        # Build health data response (backward compatible structure)
         health_data = {
             "status": status,
             "caches": caches,
             "rate_limiter": rate_limiter_info,
-            "connection": "ready"
+            "connection": "ready",
+            # New operational metrics
+            "uptime_seconds": metrics["uptime_seconds"],
+            "uptime_formatted": metrics["uptime_formatted"],
+            "metrics": {
+                "requests": metrics["requests"],
+                "cache": metrics["cache"],
+                "timing": metrics["timing"]
+            }
         }
         
         response = create_success_response(

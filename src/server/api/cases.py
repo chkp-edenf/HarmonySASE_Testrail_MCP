@@ -167,7 +167,7 @@ async def _validate_required_fields(client: TestRailClient, data: dict) -> list:
 
 
 async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get test cases for a project/suite with optional filtering"""
+    """Get test cases for a project/suite with optional advanced filtering"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
@@ -175,7 +175,31 @@ async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[Text
         suite_id = int(arguments["suite_id"]) if arguments.get("suite_id") else None
         limit = int(arguments.get("limit", "250"))
         
-        result = await client.cases.get_cases(project_id, suite_id, limit)
+        # Advanced filter parameters (v1.4.0)
+        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
+        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
+        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
+        updated_by = int(arguments["updated_by"]) if arguments.get("updated_by") else None
+        updated_after = int(arguments["updated_after"]) if arguments.get("updated_after") else None
+        updated_before = int(arguments["updated_before"]) if arguments.get("updated_before") else None
+        priority_id = arguments.get("priority_id")
+        type_id = arguments.get("type_id")
+        milestone_id = arguments.get("milestone_id")
+        
+        result = await client.cases.get_cases(
+            project_id,
+            suite_id,
+            limit,
+            created_by=created_by,
+            created_after=created_after,
+            created_before=created_before,
+            updated_by=updated_by,
+            updated_after=updated_after,
+            updated_before=updated_before,
+            priority_id=priority_id,
+            type_id=type_id,
+            milestone_id=milestone_id
+        )
         cases = result.get("cases", [])
         
         if not cases:

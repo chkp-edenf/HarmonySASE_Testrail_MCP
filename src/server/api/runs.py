@@ -22,14 +22,31 @@ def format_run(run: dict) -> str:
 
 
 async def handle_get_runs(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get test runs for a project"""
+    """Get test runs for a project with optional advanced filtering"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
         project_id = int(arguments["project_id"])
         limit = int(arguments.get("limit", "250"))
         
-        result = await client.runs.get_runs(project_id, limit)
+        # Advanced filter parameters (v1.4.0)
+        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
+        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
+        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
+        milestone_id = arguments.get("milestone_id")
+        is_completed = None
+        if arguments.get("is_completed") is not None:
+            is_completed = arguments["is_completed"].lower() == "true"
+        
+        result = await client.runs.get_runs(
+            project_id,
+            limit,
+            created_by=created_by,
+            created_after=created_after,
+            created_before=created_before,
+            milestone_id=milestone_id,
+            is_completed=is_completed
+        )
         runs = result.get("runs", [])
         
         if not runs:

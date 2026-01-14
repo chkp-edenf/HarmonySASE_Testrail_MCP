@@ -412,6 +412,133 @@ def get_all_tools() -> list[Tool]:
             }
         ),
         
+        # ==================== PLANS ====================
+        Tool(
+            name="get_plans",
+            description="Get test plans for a project",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID"},
+                    "limit": {"type": "string", "description": "Max results (default 250)"},
+                    "offset": {"type": "string", "description": "Pagination offset (default 0)"}
+                },
+                "required": ["project_id"]
+            }
+        ),
+        Tool(
+            name="get_plan",
+            description="Get details of a specific test plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Test plan ID"}
+                },
+                "required": ["plan_id"]
+            }
+        ),
+        Tool(
+            name="add_plan",
+            description="Create a new test plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID"},
+                    "name": {"type": "string", "description": "Plan name"},
+                    "description": {"type": "string", "description": "Plan description (optional)"},
+                    "milestone_id": {"type": "string", "description": "Milestone ID (optional)"},
+                    "entries": {"type": "string", "description": "JSON array of plan entries (optional)"}
+                },
+                "required": ["project_id", "name"]
+            }
+        ),
+        Tool(
+            name="update_plan",
+            description="Update an existing test plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Test plan ID"},
+                    "name": {"type": "string", "description": "New plan name (optional)"},
+                    "description": {"type": "string", "description": "New description (optional)"},
+                    "milestone_id": {"type": "string", "description": "New milestone ID (optional)"},
+                    "entries": {"type": "string", "description": "JSON array of updated plan entries (optional)"}
+                },
+                "required": ["plan_id"]
+            }
+        ),
+        Tool(
+            name="close_plan",
+            description="Close a test plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Test plan ID"}
+                },
+                "required": ["plan_id"]
+            }
+        ),
+        Tool(
+            name="delete_plan",
+            description="Delete a test plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Test plan ID"}
+                },
+                "required": ["plan_id"]
+            }
+        ),
+        Tool(
+            name="add_plan_entry",
+            description="Add a test run/entry to an existing plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Plan ID"},
+                    "suite_id": {"type": "string", "description": "Suite ID (required)"},
+                    "name": {"type": "string", "description": "Entry name (optional)"},
+                    "description": {"type": "string", "description": "Entry description (optional)"},
+                    "assignedto_id": {"type": "string", "description": "User ID to assign (optional)"},
+                    "include_all": {"type": "string", "description": "Include all cases: true/false (optional)"},
+                    "case_ids": {"type": "string", "description": "Comma-separated case IDs (optional)"},
+                    "config_ids": {"type": "string", "description": "Comma-separated config IDs (optional)"},
+                    "runs": {"type": "string", "description": "JSON array of custom run configurations (optional)"}
+                },
+                "required": ["plan_id", "suite_id"]
+            }
+        ),
+        Tool(
+            name="update_plan_entry",
+            description="Update an existing plan entry",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Plan ID"},
+                    "entry_id": {"type": "string", "description": "Entry ID to update"},
+                    "name": {"type": "string", "description": "New entry name (optional)"},
+                    "description": {"type": "string", "description": "New description (optional)"},
+                    "assignedto_id": {"type": "string", "description": "New assignee user ID (optional)"},
+                    "include_all": {"type": "string", "description": "Include all cases: true/false (optional)"},
+                    "case_ids": {"type": "string", "description": "Comma-separated case IDs (optional)"},
+                    "config_ids": {"type": "string", "description": "Comma-separated config IDs (optional)"}
+                },
+                "required": ["plan_id", "entry_id"]
+            }
+        ),
+        Tool(
+            name="delete_plan_entry",
+            description="Remove an entry from a plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "plan_id": {"type": "string", "description": "Plan ID"},
+                    "entry_id": {"type": "string", "description": "Entry ID to delete"}
+                },
+                "required": ["plan_id", "entry_id"]
+            }
+        ),
+        
         # ==================== RESULTS ====================
         Tool(
             name="get_results",
@@ -515,6 +642,149 @@ def get_all_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {},
                 "required": []
+            }
+        ),
+        
+        # ==================== USERS ====================
+        Tool(
+            name="get_users",
+            description="Get all users in TestRail instance",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "is_active": {"type": "string", "description": "Filter by active status: true/false (optional). Omit to get all users."}
+                },
+                "required": []
+            }
+        ),
+        Tool(
+            name="get_user",
+            description="Get specific user by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "user_id": {"type": "string", "description": "User ID (numeric identifier)"}
+                },
+                "required": ["user_id"]
+            }
+        ),
+        Tool(
+            name="get_user_by_email",
+            description="Lookup user by email address",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "email": {"type": "string", "description": "Email address of the user to lookup"}
+                },
+                "required": ["email"]
+            }
+        ),
+        
+        # ==================== MILESTONES ====================
+        Tool(
+            name="get_milestones",
+            description="Get milestones for a project",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID"},
+                    "is_completed": {"type": "string", "description": "Filter by completion status: true/false (optional)"},
+                    "is_started": {"type": "string", "description": "Filter by started status: true/false (optional)"}
+                },
+                "required": ["project_id"]
+            }
+        ),
+        Tool(
+            name="get_milestone",
+            description="Get details of a specific milestone",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "milestone_id": {"type": "string", "description": "Milestone ID"}
+                },
+                "required": ["milestone_id"]
+            }
+        ),
+        Tool(
+            name="add_milestone",
+            description="Create a new milestone for release management and timeline tracking",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID"},
+                    "name": {"type": "string", "description": "Milestone name"},
+                    "description": {"type": "string", "description": "Milestone description (optional)"},
+                    "due_on": {"type": "string", "description": "Due date as Unix timestamp (optional)"},
+                    "start_on": {"type": "string", "description": "Start date as Unix timestamp (optional)"},
+                    "parent_id": {"type": "string", "description": "Parent milestone ID for hierarchical milestones (optional)"}
+                },
+                "required": ["project_id", "name"]
+            }
+        ),
+        Tool(
+            name="update_milestone",
+            description="Update an existing milestone",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "milestone_id": {"type": "string", "description": "Milestone ID"},
+                    "name": {"type": "string", "description": "New milestone name (optional)"},
+                    "description": {"type": "string", "description": "New description (optional)"},
+                    "due_on": {"type": "string", "description": "Due date as Unix timestamp (optional)"},
+                    "start_on": {"type": "string", "description": "Start date as Unix timestamp (optional)"},
+                    "parent_id": {"type": "string", "description": "Parent milestone ID (optional)"},
+                    "is_completed": {"type": "string", "description": "Mark as completed: true/false (optional)"},
+                    "is_started": {"type": "string", "description": "Mark as started: true/false (optional)"}
+                },
+                "required": ["milestone_id"]
+            }
+        ),
+        Tool(
+            name="delete_milestone",
+            description="Delete a milestone",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "milestone_id": {"type": "string", "description": "Milestone ID"}
+                },
+                "required": ["milestone_id"]
+            }
+        ),
+        
+        # ==================== CONFIGURATIONS ====================
+        Tool(
+            name="get_configs",
+            description="Get all configuration groups for a project. Configurations are used for multi-platform testing (e.g., Browser, OS, Device) in matrix testing scenarios.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID"}
+                },
+                "required": ["project_id"]
+            }
+        ),
+        Tool(
+            name="add_config_group",
+            description="Create a new configuration group for organizing test configurations (e.g., 'Browsers', 'Operating Systems', 'Devices')",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string", "description": "Project ID"},
+                    "name": {"type": "string", "description": "Configuration group name"}
+                },
+                "required": ["project_id", "name"]
+            }
+        ),
+        Tool(
+            name="add_config",
+            description="Add a configuration to a group (e.g., add 'Chrome' to 'Browsers' group)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "config_group_id": {"type": "string", "description": "Configuration group ID"},
+                    "name": {"type": "string", "description": "Configuration name"}
+                },
+                "required": ["config_group_id", "name"]
             }
         ),
         

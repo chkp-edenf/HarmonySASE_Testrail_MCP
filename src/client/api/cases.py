@@ -16,14 +16,44 @@ class CasesClient:
         self,
         project_id: int,
         suite_id: Optional[int] = None,
-        limit: int = 250
+        limit: int = 250,
+        # Advanced filtering parameters (v1.4.0)
+        created_by: Optional[int] = None,
+        created_after: Optional[int] = None,
+        created_before: Optional[int] = None,
+        updated_by: Optional[int] = None,
+        updated_after: Optional[int] = None,
+        updated_before: Optional[int] = None,
+        priority_id: Optional[str] = None,
+        type_id: Optional[str] = None,
+        milestone_id: Optional[str] = None
     ) -> dict:
-        """Get test cases for a project/suite"""
+        """Get test cases for a project/suite with optional advanced filtering"""
         endpoint = f"get_cases/{project_id}"
         params = {"limit": limit}
         
         if suite_id is not None:
             params["suite_id"] = suite_id
+        
+        # Add advanced filter parameters if provided
+        if created_by is not None:
+            params["created_by"] = created_by
+        if created_after is not None:
+            params["created_after"] = created_after
+        if created_before is not None:
+            params["created_before"] = created_before
+        if updated_by is not None:
+            params["updated_by"] = updated_by
+        if updated_after is not None:
+            params["updated_after"] = updated_after
+        if updated_before is not None:
+            params["updated_before"] = updated_before
+        if priority_id is not None:
+            params["priority_id"] = priority_id
+        if type_id is not None:
+            params["type_id"] = type_id
+        if milestone_id is not None:
+            params["milestone_id"] = milestone_id
         
         result = await self._client.get(endpoint, params=params)
         
