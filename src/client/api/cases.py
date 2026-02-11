@@ -1,6 +1,6 @@
 """Test case-specific API client"""
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from .base_client import BaseAPIClient
 from ...shared.schemas import TestCase, CasesResponse, AddCasePayload
 
@@ -16,7 +16,9 @@ class CasesClient:
         self,
         project_id: int,
         suite_id: Optional[int] = None,
+        section_id: Optional[int] = None,
         limit: int = 250,
+        offset: Optional[int] = None,
         # Advanced filtering parameters (v1.4.0)
         created_by: Optional[int] = None,
         created_after: Optional[int] = None,
@@ -24,16 +26,43 @@ class CasesClient:
         updated_by: Optional[int] = None,
         updated_after: Optional[int] = None,
         updated_before: Optional[int] = None,
-        priority_id: Optional[str] = None,
-        type_id: Optional[str] = None,
-        milestone_id: Optional[str] = None
+        priority_id: Optional[Union[int, str]] = None,
+        type_id: Optional[Union[int, str]] = None,
+        template_id: Optional[Union[int, str]] = None,
+        milestone_id: Optional[Union[int, str]] = None
     ) -> dict:
-        """Get test cases for a project/suite with optional advanced filtering"""
+        """
+        Get test cases for a project/suite with optional advanced filtering
+        
+        Args:
+            project_id: The ID of the project
+            suite_id: Filter by suite ID (API-supported)
+            section_id: Filter by section ID (API-supported)
+            limit: Maximum number of results to return (default: 250)
+            offset: Pagination offset (API-supported)
+            created_by: Filter by creator user ID(s) (API-supported)
+            created_after: Filter cases created after timestamp (API-supported)
+            created_before: Filter cases created before timestamp (API-supported)
+            updated_by: Filter by updater user ID(s) (API-supported)
+            updated_after: Filter cases updated after timestamp (API-supported)
+            updated_before: Filter cases updated before timestamp (API-supported)
+            priority_id: Filter by priority ID(s) (API-supported)
+            type_id: Filter by type ID(s) (API-supported)
+            template_id: Filter by template ID(s) (API-supported)
+            milestone_id: Filter by milestone ID(s) (API-supported)
+            
+        Returns:
+            Dict with cases list and pagination info
+        """
         endpoint = f"get_cases/{project_id}"
         params = {"limit": limit}
         
         if suite_id is not None:
             params["suite_id"] = suite_id
+        if section_id is not None:
+            params["section_id"] = section_id
+        if offset is not None:
+            params["offset"] = offset
         
         # Add advanced filter parameters if provided
         if created_by is not None:
@@ -49,11 +78,13 @@ class CasesClient:
         if updated_before is not None:
             params["updated_before"] = updated_before
         if priority_id is not None:
-            params["priority_id"] = priority_id
+            params["priority_id"] = priority_id  # type: ignore
         if type_id is not None:
-            params["type_id"] = type_id
+            params["type_id"] = type_id  # type: ignore
+        if template_id is not None:
+            params["template_id"] = template_id  # type: ignore
         if milestone_id is not None:
-            params["milestone_id"] = milestone_id
+            params["milestone_id"] = milestone_id  # type: ignore
         
         result = await self._client.get(endpoint, params=params)
         

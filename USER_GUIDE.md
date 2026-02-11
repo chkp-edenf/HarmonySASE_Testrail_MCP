@@ -22,7 +22,7 @@
 This guide will walk you through:
 1. Setting up the TestRail MCP Server from scratch
 2. Configuring it with Claude Desktop or VS Code
-3. Using the 61 available tools effectively
+3. Using the 64 available tools effectively
 4. Troubleshooting common issues
 
 **Time Required:** 10-15 minutes
@@ -995,9 +995,159 @@ Shows all configuration groups and their nested configurations for the project.
 
 ---
 
+## Filtering and Pagination
+
+The TestRail MCP server supports comprehensive filtering and pagination across all GET tools. Filters allow AI agents to query specific subsets of data efficiently.
+
+### Filter Types
+
+- **✅ API-supported filters**: Efficient server-side filtering (recommended)
+- **🔧 Client-side filters**: Requires fetching all data first, then filtering (use with caution on large datasets)
+
+### get_tests - Filter Tests in a Run
+
+Filter tests by assignment, priority, type, and status:
+
+**Example: Get untested tests assigned to a user**
+```json
+{
+  "run_id": "7420",
+  "status_id": 3,
+  "assignedto_id": 5
+}
+```
+
+**Example: Get high priority tests**
+```json
+{
+  "run_id": "7420",
+  "priority_id": 2
+}
+```
+
+**Example: Pagination**
+```json
+{
+  "run_id": "7420",
+  "limit": 50,
+  "offset": 0
+}
+```
+
+**Available Filters:**
+- `status_id` (integer) - ✅ Filter by status (1=passed, 2=blocked, 3=untested, etc.)
+- `assignedto_id` (integer) - 🔧 Filter by assigned user ID
+- `priority_id` (integer) - 🔧 Filter by priority level
+- `type_id` (integer) - 🔧 Filter by test type
+- `limit` (integer) - ✅ Limit number of results
+- `offset` (integer) - ✅ Pagination offset
+
+### get_cases - Filter Test Cases
+
+**Example: Filter by section and priority**
+```json
+{
+  "project_id": "1",
+  "suite_id": "2",
+  "section_id": "10",
+  "priority_id": "1,2"
+}
+```
+
+**Available Filters:**
+- All existing filters (created_by, updated_by, priority_id, type_id, milestone_id, created_after, created_before)
+- `section_id` (integer/string) - ✅ Filter by section
+- `template_id` (integer/string) - ✅ Filter by template
+- `offset` (integer) - ✅ Pagination offset
+
+### get_runs - Filter Test Runs
+
+**Example: Filter by suite and completion**
+```json
+{
+  "project_id": "1",
+  "suite_id": "2",
+  "is_completed": 0
+}
+```
+
+**Available Filters:**
+- `created_by` (integer/string) - ✅ Filter by creator
+- `is_completed` (integer/boolean) - ✅ Filter by completion status
+- `milestone_id` (integer/string) - ✅ Filter by milestone
+- `suite_id` (integer/string) - ✅ Filter by suite
+- `offset` (integer) - ✅ Pagination offset
+
+### get_plans - Filter Test Plans
+
+**Example: Filter by milestone and date range**
+```json
+{
+  "project_id": "1",
+  "milestone_id": "5",
+  "created_after": 1609459200,
+  "created_before": 1640995199
+}
+```
+
+**Available Filters:**
+- `created_by` (integer/string) - ✅ Filter by creator
+- `created_after` (integer) - ✅ Unix timestamp
+- `created_before` (integer) - ✅ Unix timestamp
+- `milestone_id` (integer/string) - ✅ Filter by milestone
+- `is_completed` (integer/boolean) - ✅ Filter by completion status
+- `limit` (integer) - ✅ Limit results
+- `offset` (integer) - ✅ Pagination offset
+
+### get_users - Filter Users
+
+**Example: Find users by name or email**
+```json
+{
+  "name": "john"
+}
+```
+
+```json
+{
+  "email": "@example.com",
+  "project_id": 1
+}
+```
+
+**Available Filters:**
+- `project_id` (integer) - ✅ Filter by project
+- `name` (string) - 🔧 Substring search (case-insensitive)
+- `email` (string) - 🔧 Substring search (case-insensitive)
+
+### get_milestones - Filter Milestones
+
+**Example: Find active milestones by name**
+```json
+{
+  "project_id": "1",
+  "is_completed": false,
+  "name": "Sprint"
+}
+```
+
+**Available Filters:**
+- `is_completed` (boolean) - ✅ Filter by completion status
+- `is_started` (boolean) - ✅ Filter by start status
+- `name` (string) - 🔧 Substring search (case-insensitive)
+
+### Performance Considerations
+
+- **API-supported filters (✅)**: Process data on the TestRail server (fast, efficient)
+- **Client-side filters (🔧)**: Fetch all data first, then filter (slower for large datasets)
+- For large datasets (>1000 records), prefer API-supported filters
+- Use pagination (`limit` and `offset`) to manage large result sets
+
+---
+
 ## Testing & Validation
 
-The TestRail MCP Server includes a comprehensive test suite with **61 test scripts** (one for each tool) to validate your deployment.
+The TestRail MCP Server includes a comprehensive test suite with **64 test scripts** (one for each tool) to validate your deployment.
 
 ### Quick Validation
 
@@ -1510,5 +1660,4 @@ For comprehensive documentation on the TestRail MCP Server, see the organized do
 ---
 
 **Version**: 1.5.0
-**Last Updated**: January 14, 2026
 **Maintainer**: Harmony SASE Team

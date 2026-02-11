@@ -4,6 +4,7 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.sections import GetSectionsInput
 from .utils import create_success_response, create_error_response, format_section, truncate_output
 
 logger = logging.getLogger(__name__)
@@ -14,10 +15,20 @@ async def handle_get_sections(arguments: dict, client: TestRailClient) -> list[T
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        project_id = int(arguments["project_id"])
-        suite_id = int(arguments["suite_id"]) if arguments.get("suite_id") else None
+        # Validate and parse input
+        input_data = GetSectionsInput(**arguments)
         
-        result = await client.sections.get_sections(project_id, suite_id)
+        project_id = int(input_data.project_id)
+        suite_id = int(input_data.suite_id) if input_data.suite_id else None
+        limit = input_data.limit
+        offset = input_data.offset
+        
+        result = await client.sections.get_sections(
+            project_id=project_id,
+            suite_id=suite_id,
+            limit=limit,
+            offset=offset
+        )
         sections = result.get("sections", [])
         
         if not sections:

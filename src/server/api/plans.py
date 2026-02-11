@@ -4,6 +4,7 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.plans import GetPlansInput
 from .utils import create_success_response, create_error_response, truncate_output
 
 logger = logging.getLogger(__name__)
@@ -28,15 +29,38 @@ def format_plan(plan: dict) -> str:
 
 
 async def handle_get_plans(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get test plans for a project"""
+    """Get test plans for a project with filtering support"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        project_id = int(arguments["project_id"])
-        limit = int(arguments.get("limit", "250"))
-        offset = int(arguments.get("offset", "0"))
+        # Validate and parse input
+        input_data = GetPlansInput(**arguments)
         
-        result = await client.plans.get_plans(project_id, limit, offset)
+        # Extract all parameters including new filters
+        project_id = int(input_data.project_id)
+        limit = int(input_data.limit) if input_data.limit else 250
+        offset = int(input_data.offset) if input_data.offset else 0
+        
+        # Advanced filter parameters
+        created_by = int(input_data.created_by) if input_data.created_by else None
+        created_after = int(input_data.created_after) if input_data.created_after else None
+        created_before = int(input_data.created_before) if input_data.created_before else None
+        milestone_id = input_data.milestone_id
+        is_completed = None
+        if input_data.is_completed is not None:
+            is_completed = input_data.is_completed.lower() in ("true", "1")
+        
+        # Call client method with all parameters
+        result = await client.plans.get_plans(
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
+            created_by=created_by,
+            created_after=created_after,
+            created_before=created_before,
+            milestone_id=milestone_id,
+            is_completed=is_completed
+        )
         plans = result.get("plans", [])
         
         if not plans:

@@ -66,3 +66,16 @@ class PrioritiesResponse(BaseModel):
     """Response for get_priorities endpoint"""
     priorities: List[Priority] = Field(default_factory=list)
     count: int = 0
+
+
+class Template(BaseModel):
+    """TestRail Template schema"""
+    id: int
+    name: str
+    is_default: Optional[bool] = None
+
+
+class TemplatesResponse(BaseModel):
+    """Response for get_templates endpoint"""
+    templates: List[Template] = Field(default_factory=list)
+    count: int = 0

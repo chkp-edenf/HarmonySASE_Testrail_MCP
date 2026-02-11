@@ -21,6 +21,15 @@ class SectionsResponse(PaginatedResponse):
     sections: List[Section] = Field(default_factory=list)
 
 
+# Input schemas for MCP tool validation
+class GetSectionsInput(BaseModel):
+    """Input schema for getting sections"""
+    project_id: str = Field(..., description="Project ID")
+    suite_id: Optional[str] = Field(None, description="Suite ID (optional, filters sections by suite)")
+    limit: Optional[int] = Field(None, description="✅ The number of sections to return (default 250) — TestRail 6.7+ (API-supported)")
+    offset: Optional[int] = Field(None, description="✅ Pagination offset — TestRail 6.7+ (API-supported)")
+
+
 class AddSectionPayload(BaseModel):
     """Payload for creating a new section"""
     name: str = Field(..., description="Section name (required)")

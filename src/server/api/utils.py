@@ -1,6 +1,6 @@
-"""Utility functions for response formatting"""
+"""Utility functions for response formatting and filtering"""
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -97,4 +97,138 @@ def truncate_output(text: str, max_size: int = 100000) -> str:
     if len(text) > max_size:
         return text[:max_size] + f"\n\n Output truncated (exceeded {max_size} bytes)"
     return text
+
+
+def apply_filters(items: List[Dict[str, Any]], filters: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Apply multiple field filters to a list of items (client-side filtering)
+    
+    This function performs client-side filtering on a list of dictionaries,
+    returning only items that match ALL provided filter criteria (AND logic).
+    This is useful when the TestRail API has limited server-side filtering.
+    
+    Args:
+        items: List of dictionaries (response data from TestRail API)
+        filters: Dictionary of field_name -> expected_value mappings
+                 None values are skipped (allow optional filters)
+    
+    Returns:
+        List of items that match all provided filters
+    
+    Examples:
+        >>> tests = [
+        ...     {"id": 1, "assignedto_id": 5, "priority_id": 2},
+        ...     {"id": 2, "assignedto_id": 5, "priority_id": 3},
+        ...     {"id": 3, "assignedto_id": 6, "priority_id": 2}
+        ... ]
+        >>> apply_filters(tests, {"assignedto_id": 5, "priority_id": 2})
+        [{"id": 1, "assignedto_id": 5, "priority_id": 2}]
+        
+        >>> apply_filters(tests, {"assignedto_id": None})  # None values ignored
+        [{"id": 1, ...}, {"id": 2, ...}, {"id": 3, ...}]
+    
+    Edge Cases:
+        - Empty items list returns empty list
+        - Empty filters dict returns all items unchanged
+        - Missing fields in items are treated as non-matches for that filter
+        - None filter values are skipped (allows optional filtering)
+    """
+    if not items:
+        return []
+    
+    if not filters:
+        return items
+    
+    # Filter out None values from filters (allow optional filters)
+    active_filters = {k: v for k, v in filters.items() if v is not None}
+    
+    if not active_filters:
+        return items
+    
+    filtered_items = []
+    for item in items:
+        # Check if item matches ALL filter criteria (AND logic)
+        matches_all = True
+        for field_name, expected_value in active_filters.items():
+            # Get the field value from item, handle missing fields gracefully
+            item_value = item.get(field_name)
+            
+            # If field doesn't exist or doesn't match, exclude this item
+            if item_value != expected_value:
+                matches_all = False
+                break
+        
+        if matches_all:
+            filtered_items.append(item)
+    
+    return filtered_items
+
+
+def apply_name_filter(
+    items: List[Dict[str, Any]],
+    name: Optional[str],
+    field: str = "name"
+) -> List[Dict[str, Any]]:
+    """Apply substring matching filter for name-based searches
+    
+    This function performs case-insensitive substring matching on a specified
+    field in a list of dictionaries. Useful for searching users by name/email,
+    projects by name, etc.
+    
+    Args:
+        items: List of dictionaries to filter
+        name: Search string for case-insensitive substring match
+              If None or empty, returns all items unchanged
+        field: Field name to search in (default: "name")
+    
+    Returns:
+        List of items where the specified field contains the search string
+    
+    Examples:
+        >>> users = [
+        ...     {"id": 1, "name": "John Doe", "email": "john@example.com"},
+        ...     {"id": 2, "name": "Jane Smith", "email": "jane@example.com"},
+        ...     {"id": 3, "name": "Bob Johnson", "email": "bob@example.com"}
+        ... ]
+        >>> apply_name_filter(users, "john")
+        [{"id": 1, "name": "John Doe", ...}, {"id": 3, "name": "Bob Johnson", ...}]
+        
+        >>> apply_name_filter(users, "john", field="email")
+        [{"id": 1, "name": "John Doe", "email": "john@example.com"}]
+        
+        >>> apply_name_filter(users, None)  # None returns all
+        [{"id": 1, ...}, {"id": 2, ...}, {"id": 3, ...}]
+    
+    Edge Cases:
+        - Empty items list returns empty list
+        - None or empty name returns all items unchanged
+        - Missing field in items are excluded from results
+        - Case-insensitive matching (e.g., "JOHN" matches "john")
+        - Non-string field values are converted to string for matching
+    """
+    if not items:
+        return []
+    
+    # If no search string provided, return all items
+    if not name or name.strip() == "":
+        return items
+    
+    # Convert search string to lowercase for case-insensitive matching
+    search_string = name.lower()
+    
+    filtered_items = []
+    for item in items:
+        # Get the field value, handle missing fields gracefully
+        field_value = item.get(field)
+        
+        # Skip items that don't have the field
+        if field_value is None:
+            continue
+        
+        # Convert field value to string and perform case-insensitive substring match
+        field_str = str(field_value).lower()
+        
+        if search_string in field_str:
+            filtered_items.append(item)
+    
+    return filtered_items
 
