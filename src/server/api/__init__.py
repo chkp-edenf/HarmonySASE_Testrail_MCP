@@ -17,7 +17,7 @@ from .sections import (
     handle_update_section, handle_delete_section, handle_move_section
 )
 from .cases import (
-    handle_get_cases, handle_get_case, handle_add_case, handle_update_case,
+    handle_get_cases, handle_get_case, handle_get_cases_by_ids, handle_add_case, handle_update_case,
     handle_delete_case, handle_get_case_history, handle_copy_cases_to_section,
     handle_move_cases_to_section, handle_update_cases, handle_delete_cases
 )
@@ -33,9 +33,9 @@ from .plans import (
 )
 from .results import (
     handle_get_results, handle_get_results_for_case, handle_get_results_for_run,
-    handle_add_result, handle_add_results
+    handle_add_result, handle_add_results, handle_add_result_for_case, handle_add_results_for_cases
 )
-from .case_fields import handle_get_case_fields, handle_get_case_types, handle_get_priorities
+from .case_fields import handle_get_case_fields, handle_get_case_types, handle_get_priorities, handle_get_templates
 from .statuses import handle_get_statuses
 from .users import handle_get_users, handle_get_user, handle_get_user_by_email
 from .milestones import (
@@ -81,6 +81,7 @@ def get_tool_handlers() -> dict[str, ToolHandler]:
         # Cases
         "get_cases": handle_get_cases,
         "get_case": handle_get_case,
+        "get_cases_by_ids": handle_get_cases_by_ids,
         "add_case": handle_add_case,
         "update_case": handle_update_case,
         "delete_case": handle_delete_case,
@@ -118,10 +119,13 @@ def get_tool_handlers() -> dict[str, ToolHandler]:
         "get_results_for_case": handle_get_results_for_case,
         "get_results_for_run": handle_get_results_for_run,
         "add_result": handle_add_result,
+        "add_result_for_case": handle_add_result_for_case,
         "add_results": handle_add_results,
+        "add_results_for_cases": handle_add_results_for_cases,
         
         # Metadata
         "get_case_fields": handle_get_case_fields,
+        "get_templates": handle_get_templates,
         "get_case_types": handle_get_case_types,
         "get_priorities": handle_get_priorities,
         "get_statuses": handle_get_statuses,
@@ -166,6 +170,7 @@ __all__ = [
     "handle_move_section",
     "handle_get_cases",
     "handle_get_case",
+    "handle_get_cases_by_ids",
     "handle_add_case",
     "handle_update_case",
     "handle_delete_case",
@@ -195,8 +200,11 @@ __all__ = [
     "handle_get_results_for_case",
     "handle_get_results_for_run",
     "handle_add_result",
+    "handle_add_result_for_case",
     "handle_add_results",
+    "handle_add_results_for_cases",
     "handle_get_case_fields",
+    "handle_get_templates",
     "handle_get_case_types",
     "handle_get_priorities",
     "handle_get_statuses",

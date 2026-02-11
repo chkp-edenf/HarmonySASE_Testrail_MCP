@@ -11,13 +11,34 @@ class SectionsClient:
         """Initialize with shared HTTP client"""
         self._client = client
     
-    async def get_sections(self, project_id: int, suite_id: Optional[int] = None) -> dict:
-        """Get all sections for a project/suite"""
+    async def get_sections(
+        self,
+        project_id: int,
+        suite_id: Optional[int] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+    ) -> dict:
+        """
+        Get all sections for a project/suite
+        
+        Args:
+            project_id: The ID of the project
+            suite_id: Filter sections by suite ID (optional)
+            limit: Maximum number of results to return (API-supported, TestRail 6.7+)
+            offset: Pagination offset (API-supported, TestRail 6.7+)
+            
+        Returns:
+            Dict with sections list and pagination info
+        """
         endpoint = f"get_sections/{project_id}"
         params = {}
         
         if suite_id is not None:
             params["suite_id"] = suite_id
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
         
         result = await self._client.get(endpoint, params=params if params else None)
         

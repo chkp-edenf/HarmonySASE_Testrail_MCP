@@ -4,6 +4,7 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.runs import GetRunsInput
 from .utils import create_success_response, create_error_response, truncate_output
 
 logger = logging.getLogger(__name__)
@@ -26,26 +27,37 @@ async def handle_get_runs(arguments: dict, client: TestRailClient) -> list[TextC
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        project_id = int(arguments["project_id"])
-        limit = int(arguments.get("limit", "250"))
+        # Validate and parse input
+        input_data = GetRunsInput(**arguments)
+        
+        # Extract all parameters including new filters
+        project_id = int(input_data.project_id)
+        limit = int(input_data.limit) if input_data.limit else 250
         
         # Advanced filter parameters (v1.4.0)
-        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
-        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
-        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
-        milestone_id = arguments.get("milestone_id")
+        created_by = int(input_data.created_by) if input_data.created_by else None
+        created_after = int(input_data.created_after) if input_data.created_after else None
+        created_before = int(input_data.created_before) if input_data.created_before else None
+        milestone_id = input_data.milestone_id
         is_completed = None
-        if arguments.get("is_completed") is not None:
-            is_completed = arguments["is_completed"].lower() == "true"
+        if input_data.is_completed is not None:
+            is_completed = input_data.is_completed.lower() == "true"
+        suite_id = int(input_data.suite_id) if input_data.suite_id else None
+        offset = int(input_data.offset) if input_data.offset else None
+        refs_filter = input_data.refs_filter
         
+        # Call client method with all parameters
         result = await client.runs.get_runs(
-            project_id,
-            limit,
+            project_id=project_id,
+            limit=limit,
             created_by=created_by,
             created_after=created_after,
             created_before=created_before,
             milestone_id=milestone_id,
-            is_completed=is_completed
+            is_completed=is_completed,
+            suite_id=suite_id,
+            offset=offset,
+            refs_filter=refs_filter
         )
         runs = result.get("runs", [])
         
@@ -124,6 +136,12 @@ async def handle_add_run(arguments: dict, client: TestRailClient) -> list[TextCo
             data["include_all"] = arguments["include_all"].lower() == "true"
         if arguments.get("case_ids"):
             data["case_ids"] = [int(cid.strip()) for cid in arguments["case_ids"].split(",")]
+        if arguments.get("refs"):
+            data["refs"] = arguments["refs"]
+        if arguments.get("start_on"):
+            data["start_on"] = int(arguments["start_on"])
+        if arguments.get("due_on"):
+            data["due_on"] = int(arguments["due_on"])
         
         result = await client.runs.add_run(project_id, data)
         
@@ -160,6 +178,12 @@ async def handle_update_run(arguments: dict, client: TestRailClient) -> list[Tex
             data["include_all"] = arguments["include_all"].lower() == "true"
         if arguments.get("case_ids"):
             data["case_ids"] = [int(cid.strip()) for cid in arguments["case_ids"].split(",")]
+        if arguments.get("refs"):
+            data["refs"] = arguments["refs"]
+        if arguments.get("start_on"):
+            data["start_on"] = int(arguments["start_on"])
+        if arguments.get("due_on"):
+            data["due_on"] = int(arguments["due_on"])
         
         if not data:
             response = create_error_response("No update fields provided", Exception("No fields specified"))

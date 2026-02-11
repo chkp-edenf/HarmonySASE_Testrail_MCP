@@ -171,3 +171,37 @@ async def handle_get_priorities(arguments: dict, client: TestRailClient) -> list
             "error": str(e)
         }
         return [TextContent(type="text", text=json.dumps(response, indent=2))]
+
+
+async def handle_get_templates(arguments: dict, client: TestRailClient) -> list[TextContent]:
+    """Get all templates for a project"""
+    
+    try:
+        project_id = int(arguments["project_id"])
+        result = await client.case_fields.get_templates(project_id)
+        
+        output = "**TestRail Templates**\n\n"
+        for template in result:
+            default_indicator = " (default)" if template.get("is_default") else ""
+            output += f"**{template.get('name')}** (ID: {template.get('id')}){default_indicator}\n"
+        
+        response = {
+            "success": True,
+            "message": f"Found {len(result)} template(s) for project {project_id}",
+            "data": {
+                "templates": result,
+                "count": len(result),
+                "formatted": output
+            }
+        }
+        
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        
+    except Exception as e:
+        logger.error(f"Error in get_templates: {str(e)}")
+        response = {
+            "success": False,
+            "message": "Failed to fetch templates",
+            "error": str(e)
+        }
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]

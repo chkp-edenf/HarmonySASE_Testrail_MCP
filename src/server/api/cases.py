@@ -5,6 +5,7 @@ import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
 from ...shared.schemas import AddCasePayload
+from ...shared.schemas.cases import GetCasesInput
 from .utils import create_success_response, create_error_response, format_case, truncate_output
 from .rate_limiter import rate_limiter
 from . import field_cache, priority_cache, case_type_cache
@@ -83,11 +84,27 @@ async def _get_field_mapping(client: TestRailClient, field_name: str) -> dict:
         return {}
 
 
-async def _parse_field_values(client: TestRailClient, value_str: str, field_name: str) -> list[int]:
+async def _parse_field_values(client: TestRailClient, value_str: str | list, field_name: str) -> list[int]:
     """
     Parse comma-separated values that can be IDs or names.
     Uses persistent file cache for mappings.
+    Handles both string inputs ("1,2,3") and pre-parsed list inputs ([1, 2, 3]).
     """
+    # Handle if already a list (AI agents might send pre-parsed data)
+    if isinstance(value_str, list):
+        result = []
+        for val in value_str:
+            if isinstance(val, int):
+                result.append(val)
+            else:
+                # Try to convert string/other to int
+                try:
+                    result.append(int(val))
+                except (ValueError, TypeError):
+                    logger.warning(f"Could not convert '{val}' to int in {field_name} - skipping")
+        return result
+    
+    # Original string parsing logic
     values = [v.strip().lower() for v in value_str.split(",")]
     result = []
     
@@ -108,12 +125,17 @@ async def _parse_field_values(client: TestRailClient, value_str: str, field_name
     return result
 
 
-async def _parse_single_field_value(client: TestRailClient, value_str: str, field_name: str) -> int:
+async def _parse_single_field_value(client: TestRailClient, value_str: str | int, field_name: str) -> int:
     """
     Parse a single value (ID or name) for single-select dropdown fields.
     Uses persistent file cache for mappings.
     Returns a single integer ID.
+    Handles both string inputs ("1" or "high") and pre-parsed int inputs (1).
     """
+    # Handle if already an int (AI agents might send pre-parsed data)
+    if isinstance(value_str, int):
+        return value_str
+    
     val = value_str.strip().lower()
     
     # Get mapping from cache (file-based)
@@ -171,25 +193,34 @@ async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[Text
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        project_id = int(arguments["project_id"])
-        suite_id = int(arguments["suite_id"]) if arguments.get("suite_id") else None
-        limit = int(arguments.get("limit", "250"))
+        # Validate and parse input
+        input_data = GetCasesInput(**arguments)
+        
+        # Extract all parameters including new filters
+        project_id = int(input_data.project_id)
+        suite_id = int(input_data.suite_id) if input_data.suite_id else None
+        limit = int(input_data.limit) if input_data.limit else 250
         
         # Advanced filter parameters (v1.4.0)
-        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
-        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
-        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
-        updated_by = int(arguments["updated_by"]) if arguments.get("updated_by") else None
-        updated_after = int(arguments["updated_after"]) if arguments.get("updated_after") else None
-        updated_before = int(arguments["updated_before"]) if arguments.get("updated_before") else None
-        priority_id = arguments.get("priority_id")
-        type_id = arguments.get("type_id")
-        milestone_id = arguments.get("milestone_id")
+        created_by = int(input_data.created_by) if input_data.created_by else None
+        created_after = int(input_data.created_after) if input_data.created_after else None
+        created_before = int(input_data.created_before) if input_data.created_before else None
+        updated_by = int(input_data.updated_by) if input_data.updated_by else None
+        updated_after = int(input_data.updated_after) if input_data.updated_after else None
+        updated_before = int(input_data.updated_before) if input_data.updated_before else None
+        priority_id = input_data.priority_id
+        type_id = input_data.type_id
+        milestone_id = input_data.milestone_id
+        # Handle section_id and template_id - they can be int or str from validation
+        section_id = int(input_data.section_id) if input_data.section_id is not None else None
+        template_id = int(input_data.template_id) if input_data.template_id is not None else None
+        offset = int(input_data.offset) if input_data.offset is not None else None
         
+        # Call client method with all parameters
         result = await client.cases.get_cases(
-            project_id,
-            suite_id,
-            limit,
+            project_id=project_id,
+            suite_id=suite_id,
+            limit=limit,
             created_by=created_by,
             created_after=created_after,
             created_before=created_before,
@@ -198,7 +229,10 @@ async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[Text
             updated_before=updated_before,
             priority_id=priority_id,
             type_id=type_id,
-            milestone_id=milestone_id
+            milestone_id=milestone_id,
+            section_id=section_id,
+            template_id=template_id,
+            offset=offset
         )
         cases = result.get("cases", [])
         
@@ -226,6 +260,63 @@ async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[Text
     except Exception as e:
         logger.error(f"Error in get_cases: {str(e)}")
         response = create_error_response("Failed to fetch test cases", e)
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+    
+async def handle_get_cases_by_ids(arguments: dict, client: TestRailClient) -> list[TextContent]:
+    """Fetch multiple specific test cases by a list of case IDs (batch operation)"""
+    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    
+    try:
+        # Parse comma-separated case IDs
+        case_ids = [int(cid.strip()) for cid in arguments["case_ids"].split(",")]
+        
+        if not case_ids:
+            response = create_error_response("No case IDs provided", Exception("case_ids cannot be empty"))
+            return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        
+        # Fetch each case individually (TestRail API has no batch endpoint)
+        cases = []
+        failed_ids = []
+        
+        for case_id in case_ids:
+            try:
+                result = await client.cases.get_case(case_id)
+                cases.append(result)
+            except Exception as e:
+                logger.warning(f"Failed to fetch case {case_id}: {e}")
+                failed_ids.append(case_id)
+        
+        if not cases and failed_ids:
+            response = create_error_response(
+                f"Failed to fetch all {len(failed_ids)} case(s)",
+                Exception(f"Case IDs: {', '.join(map(str, failed_ids))}")
+            )
+            return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        
+        # Build formatted output
+        output = f"**Test Cases (Batch Fetch: {len(cases)} successful, {len(failed_ids)} failed)**\n\n"
+        for case in cases:
+            output += format_case(case) + "\n"
+        
+        if failed_ids:
+            output += f"\n⚠️ **Failed to fetch:** {', '.join(map(str, failed_ids))}"
+        
+        response = create_success_response(
+            f"Retrieved {len(cases)} of {len(case_ids)} test case(s)",
+            {
+                "cases": cases,
+                "count": len(cases),
+                "requested_count": len(case_ids),
+                "failed_ids": failed_ids,
+                "formatted": truncate_output(output)
+            }
+        )
+        
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        
+    except Exception as e:
+        logger.error(f"Error in get_cases_by_ids: {str(e)}")
+        response = create_error_response("Failed to fetch test cases by IDs", e)
         return [TextContent(type="text", text=json.dumps(response, indent=2))]
     
 async def handle_get_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
@@ -316,12 +407,15 @@ async def handle_add_case(arguments: dict, client: TestRailClient) -> list[TextC
                     
                     if field_mapping:
                         # Field has a mapping (dropdown/multi-select)
-                        # Check if value contains comma (multi-select)
-                        if isinstance(value, str) and "," in value:
-                            # Multi-select field
+                        # Check if value is already a list or contains comma (multi-select)
+                        if isinstance(value, list):
+                            # Already a list - parse it
+                            data[key] = await _parse_field_values(client, value, key)
+                        elif isinstance(value, str) and "," in value:
+                            # Comma-separated string - multi-select field
                             data[key] = await _parse_field_values(client, value, key)
                         else:
-                            # Single-select field
+                            # Single-select field (could be int or string)
                             try:
                                 data[key] = await _parse_single_field_value(client, value, key)
                             except ValueError:
@@ -433,11 +527,15 @@ async def handle_update_case(arguments: dict, client: TestRailClient) -> list[Te
                 
                 if field_mapping:
                     # Field has a mapping (dropdown/multi-select)
-                    if isinstance(value, str) and "," in value:
-                        # Multi-select field
+                    # Check if value is already a list or contains comma (multi-select)
+                    if isinstance(value, list):
+                        # Already a list - parse it
+                        data[key] = await _parse_field_values(client, value, key)
+                    elif isinstance(value, str) and "," in value:
+                        # Comma-separated string - multi-select field
                         data[key] = await _parse_field_values(client, value, key)
                     else:
-                        # Single-select field
+                        # Single-select field (could be int or string)
                         try:
                             data[key] = await _parse_single_field_value(client, value, key)
                         except ValueError:
@@ -640,11 +738,15 @@ async def handle_update_cases(arguments: dict, client: TestRailClient) -> list[T
                 
                 if field_mapping:
                     # Field has a mapping (dropdown/multi-select)
-                    if isinstance(value, str) and "," in value:
-                        # Multi-select field
+                    # Check if value is already a list or contains comma (multi-select)
+                    if isinstance(value, list):
+                        # Already a list - parse it
+                        data[key] = await _parse_field_values(client, value, key)
+                    elif isinstance(value, str) and "," in value:
+                        # Comma-separated string - multi-select field
                         data[key] = await _parse_field_values(client, value, key)
                     else:
-                        # Single-select field
+                        # Single-select field (could be int or string)
                         try:
                             data[key] = await _parse_single_field_value(client, value, key)  # type: ignore[assignment]
                         except ValueError:

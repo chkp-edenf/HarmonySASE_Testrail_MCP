@@ -1,6 +1,6 @@
 """Test case-related schemas"""
 
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
 from pydantic import BaseModel, Field
 from .common import PaginatedResponse
 
@@ -49,6 +49,9 @@ class GetCasesInput(BaseModel):
     priority_id: Optional[str] = Field(None, description="Filter by priority IDs (comma-separated for multiple)")
     type_id: Optional[str] = Field(None, description="Filter by case type IDs (comma-separated for multiple)")
     milestone_id: Optional[str] = Field(None, description="Filter by milestone IDs (comma-separated for multiple)")
+    section_id: Optional[Union[int, str]] = Field(None, description="✅ Filter by section ID (API-supported)")
+    template_id: Optional[Union[int, str]] = Field(None, description="✅ Filter by template ID (API-supported)")
+    offset: Optional[Union[int, str]] = Field(None, description="✅ Pagination offset (API-supported)")
 
 
 class GetCaseInput(BaseModel):

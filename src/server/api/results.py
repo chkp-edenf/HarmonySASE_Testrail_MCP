@@ -4,6 +4,10 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.results import (
+    GetResultsInput, GetResultsForCaseInput, GetResultsForRunInput,
+    AddResultForCaseInput, AddResultsForCasesInput
+)
 from .utils import create_success_response, create_error_response, truncate_output
 from . import status_cache
 
@@ -40,18 +44,25 @@ async def handle_get_results(arguments: dict, client: TestRailClient) -> list[Te
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        test_id = int(arguments["test_id"])
-        limit = int(arguments.get("limit", "250"))
+        # Validate and parse input
+        input_data = GetResultsInput(**arguments)
+        
+        # Extract all parameters including offset
+        test_id = int(input_data.test_id)
+        limit = int(input_data.limit) if input_data.limit else 250
+        offset = int(input_data.offset) if input_data.offset else None
         
         # Advanced filter parameters (v1.4.0)
-        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
-        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
-        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
-        status_id = arguments.get("status_id")
+        created_by = int(input_data.created_by) if input_data.created_by else None
+        created_after = int(input_data.created_after) if input_data.created_after else None
+        created_before = int(input_data.created_before) if input_data.created_before else None
+        status_id = input_data.status_id
         
+        # Call client method with all parameters
         result = await client.results.get_results(
-            test_id,
-            limit,
+            test_id=test_id,
+            limit=limit,
+            offset=offset,
             created_by=created_by,
             created_after=created_after,
             created_before=created_before,
@@ -91,20 +102,27 @@ async def handle_get_results_for_case(arguments: dict, client: TestRailClient) -
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        run_id = int(arguments["run_id"])
-        case_id = int(arguments["case_id"])
-        limit = int(arguments.get("limit", "250"))
+        # Validate and parse input
+        input_data = GetResultsForCaseInput(**arguments)
+        
+        # Extract all parameters including offset
+        run_id = int(input_data.run_id)
+        case_id = int(input_data.case_id)
+        limit = int(input_data.limit) if input_data.limit else 250
+        offset = int(input_data.offset) if input_data.offset else None
         
         # Advanced filter parameters (v1.4.0)
-        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
-        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
-        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
-        status_id = arguments.get("status_id")
+        created_by = int(input_data.created_by) if input_data.created_by else None
+        created_after = int(input_data.created_after) if input_data.created_after else None
+        created_before = int(input_data.created_before) if input_data.created_before else None
+        status_id = input_data.status_id
         
+        # Call client method with all parameters
         result = await client.results.get_results_for_case(
-            run_id,
-            case_id,
-            limit,
+            run_id=run_id,
+            case_id=case_id,
+            limit=limit,
+            offset=offset,
             created_by=created_by,
             created_after=created_after,
             created_before=created_before,
@@ -144,22 +162,31 @@ async def handle_get_results_for_run(arguments: dict, client: TestRailClient) ->
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        run_id = int(arguments["run_id"])
-        limit = int(arguments.get("limit", "250"))
+        # Validate and parse input
+        input_data = GetResultsForRunInput(**arguments)
+        
+        # Extract all parameters including offset
+        run_id = int(input_data.run_id)
+        limit = int(input_data.limit) if input_data.limit else 250
+        offset = int(input_data.offset) if input_data.offset else None
         
         # Advanced filter parameters (v1.4.0)
-        created_by = int(arguments["created_by"]) if arguments.get("created_by") else None
-        created_after = int(arguments["created_after"]) if arguments.get("created_after") else None
-        created_before = int(arguments["created_before"]) if arguments.get("created_before") else None
-        status_id = arguments.get("status_id")
+        created_by = int(input_data.created_by) if input_data.created_by else None
+        created_after = int(input_data.created_after) if input_data.created_after else None
+        created_before = int(input_data.created_before) if input_data.created_before else None
+        status_id = input_data.status_id
+        defects_filter = input_data.defects_filter
         
+        # Call client method with all parameters
         result = await client.results.get_results_for_run(
-            run_id,
-            limit,
+            run_id=run_id,
+            limit=limit,
+            offset=offset,
             created_by=created_by,
             created_after=created_after,
             created_before=created_before,
-            status_id=status_id
+            status_id=status_id,
+            defects_filter=defects_filter
         )
         results = result.get("results", [])
         
@@ -286,4 +313,102 @@ async def handle_add_results(arguments: dict, client: TestRailClient) -> list[Te
     except Exception as e:
         logger.error(f"Error in add_results: {str(e)}")
         response = create_error_response("Failed to add results", e)
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+
+
+async def handle_add_result_for_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
+    """Add a result for a case in a run"""
+    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    
+    try:
+        # Validate and parse input
+        input_data = AddResultForCaseInput(**arguments)
+        
+        # Ensure status cache is populated
+        await ensure_status_cache(client)
+        
+        run_id = int(input_data.run_id)
+        case_id = int(input_data.case_id)
+        
+        # Resolve status name/ID to numeric ID using smart cache
+        try:
+            status_id = status_cache.resolve_status(input_data.status_id)
+            logger.info(f"✅ Resolved status '{input_data.status_id}' to ID {status_id}")
+        except ValueError as e:
+            # Provide helpful error with available statuses
+            raise ValueError(str(e))
+        
+        data = {"status_id": status_id}
+        
+        # Optional fields
+        if input_data.comment:
+            data["comment"] = input_data.comment
+        if input_data.version:
+            data["version"] = input_data.version
+        if input_data.elapsed:
+            data["elapsed"] = input_data.elapsed
+        if input_data.defects:
+            data["defects"] = input_data.defects
+        if input_data.assignedto_id:
+            data["assignedto_id"] = int(input_data.assignedto_id)
+        
+        # Custom fields passthrough
+        for key, value in arguments.items():
+            if key.startswith("custom_") and key not in data:
+                data[key] = value
+        
+        result = await client.results.add_result_for_case(run_id, case_id, data)
+        
+        output = f"**Result Added for Case {case_id} in Run {run_id}**\n\n{format_result(result)}"
+        response = create_success_response(
+            f"Successfully added result for case {case_id} in run {run_id}",
+            {"result": result, "formatted": truncate_output(output)}
+        )
+        
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        
+    except Exception as e:
+        logger.error(f"Error in add_result_for_case: {str(e)}")
+        response = create_error_response("Failed to add result for case", e)
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+
+
+async def handle_add_results_for_cases(arguments: dict, client: TestRailClient) -> list[TextContent]:
+    """Add results for multiple cases in a run"""
+    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    
+    try:
+        # Validate and parse input
+        input_data = AddResultsForCasesInput(**arguments)
+        
+        # Ensure status cache is populated
+        await ensure_status_cache(client)
+        
+        run_id = int(input_data.run_id)
+        
+        # Parse results JSON
+        results_data = json.loads(input_data.results) if isinstance(input_data.results, str) else input_data.results
+        
+        # Resolve status names to IDs in each result
+        for result in results_data:
+            if "status_id" in result:
+                try:
+                    result["status_id"] = status_cache.resolve_status(str(result["status_id"]))
+                    logger.info(f"✅ Resolved status to ID {result['status_id']}")
+                except ValueError as e:
+                    logger.warning(f"Status resolution failed for result: {e}")
+        
+        data = {"results": results_data}
+        result = await client.results.add_results_for_cases(run_id, data)
+        
+        response = create_success_response(
+            f"Successfully added {len(results_data)} result(s) for cases in run {run_id}",
+            {"result": result, "formatted": f"Added {len(results_data)} results for cases in run {run_id}"}
+        )
+        
+        return [TextContent(type="text", text=json.dumps(response, indent=2))]
+        
+    except Exception as e:
+        logger.error(f"Error in add_results_for_cases: {str(e)}")
+        response = create_error_response("Failed to add results for cases", e)
         return [TextContent(type="text", text=json.dumps(response, indent=2))]

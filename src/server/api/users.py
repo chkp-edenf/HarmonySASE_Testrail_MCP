@@ -4,6 +4,7 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.users import GetUsersInput
 from .utils import create_success_response, create_error_response, truncate_output
 
 logger = logging.getLogger(__name__)
@@ -23,17 +24,26 @@ def format_user(user: dict) -> str:
 
 
 async def handle_get_users(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get all users in TestRail instance"""
+    """Get all users in TestRail instance with filtering support"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        # Optional filter by active status
-        is_active = None
-        if arguments.get("is_active") is not None:
-            is_active_str = str(arguments["is_active"]).lower()
-            is_active = is_active_str in ("true", "1", "yes")
+        # Validate and parse input
+        input_data = GetUsersInput(**arguments)
         
-        result = await client.users.get_users(is_active=is_active)
+        # Extract all parameters including new filters
+        is_active = input_data.is_active
+        project_id = int(input_data.project_id) if input_data.project_id else None
+        name = input_data.name
+        email = input_data.email
+        
+        # Call client method with all parameters
+        result = await client.users.get_users(
+            is_active=is_active,
+            project_id=project_id,
+            name=name,
+            email=email
+        )
         users = result.get("users", [])
         
         if not users:

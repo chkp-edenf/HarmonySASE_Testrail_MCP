@@ -12,9 +12,10 @@
 
 ## 🌟 Highlights
 
-- 🎯 **61 Complete Tools** - Full CRUD for projects, suites, sections, cases, runs, tests, results, plans, users, milestones, and configurations
+- 🎯 **64 Complete Tools** - Full CRUD for projects, suites, sections, cases, runs, tests, results, plans, users, milestones, and configurations
 - 🌍 **100% Portable** - Works with ANY TestRail instance (no hardcoded custom fields!)
-- 🧠 **Smart Field Handling** - Say "Regression" instead of memorizing numeric IDs  
+- 🧠 **Smart Field Handling** - Say "Regression" instead of memorizing numeric IDs
+- 🔍 **Comprehensive Filtering and Pagination** - Query specific subsets of data with API-supported and client-side filters
 - ⚡ **Auto Rate-Limited** - Built-in throttling (180 req/min) protects your API quota
 - 🔒 **Secure by Default** - Non-root Docker, environment variables only, no persistent storage
 - 📦 **Zero Setup Friction** - Docker image builds in 30 seconds, connects in 5 minutes
@@ -49,7 +50,7 @@ You → "Create 10 test cases for the login flow with priority Critical"
 You ← "Created 10 test cases in section 'Login Tests'"
 ```
 
-The Model Context Protocol (MCP) is a standard that lets AI assistants securely call external tools. This server implements 61 TestRail tools that your AI can use—no TestRail expertise required!
+The Model Context Protocol (MCP) is a standard that lets AI assistants securely call external tools. This server implements 64 TestRail tools that your AI can use—no TestRail expertise required!
 
 ### Why Use This vs TestRail UI?
 
@@ -66,7 +67,7 @@ The Model Context Protocol (MCP) is a standard that lets AI assistants securely 
 
 This MCP server was created to solve real workflow friction experienced by QA teams managing large test suites. After watching testers spend hours on repetitive TestRail tasks, we built a better way.
 
-**Version 1.5.0** adds Users (3), Milestones (5), and Configurations (3) support for enhanced team collaboration and multi-platform testing, bringing total tools to 61. See [CHANGELOG](reference/CHANGELOG.md) for details.
+**Version 1.5.0** adds Users (3), Milestones (5), and Configurations (3) support for enhanced team collaboration and multi-platform testing, bringing total tools to 64. See [CHANGELOG](reference/CHANGELOG.md) for details.
 
 ---
 
@@ -151,6 +152,19 @@ AI uses: get_results_for_run
 Result: Formatted table with test names, statuses, and failure comments
 ```
 
+### Advanced Filtering
+
+The server supports comprehensive filtering across all GET tools. See the [User Guide](USER_GUIDE.md#filtering-and-pagination) for detailed filtering examples and capabilities.
+
+**Quick Examples:**
+
+```
+"Get all high-priority test cases in project 1"
+"Show me untested tests assigned to user 5 in run 7420"
+"List active milestones with name containing 'Sprint'"
+"Get completed test runs for milestone 10"
+```
+
 **See more:** [reference/QUICK_REFERENCE.md](reference/QUICK_REFERENCE.md)
 
 ---
@@ -203,7 +217,7 @@ Add to your AI client's MCP config (Claude Desktop example):
 ## 🛠️ Available Tools
 
 <details>
-<summary><strong>61 Tools Organized by Category</strong></summary>
+<summary><strong>64 Tools Organized by Category</strong></summary>
 
 ### Projects (2 tools)
 - `get_projects` - List all projects
@@ -231,9 +245,10 @@ Add to your AI client's MCP config (Claude Desktop example):
 ### Tests (2 tools)
 - `get_tests`, `get_test` - View tests in a run
 
-### Results (5 tools)
+### Results (7 tools)
 - `get_results`, `get_results_for_case`, `get_results_for_run` - Query results
 - `add_result`, `add_results` - Record test outcomes
+- `add_result_for_case`, `add_results_for_cases` - Alternative result submission methods
 
 ### Test Plans (9 tools)
 - `get_plans`, `get_plan` - View test plans
@@ -255,9 +270,9 @@ Add to your AI client's MCP config (Claude Desktop example):
 - `add_config` - Add configurations to groups
 
 ### Metadata & Health (5 tools)
-- `get_case_fields` - **Run this first!** (discovers custom fields, populates 3 caches)
+- `get_case_fields` - **Run this first!** (discovers custom fields, populates cache)
+- `get_case_types`, `get_priorities` - View case types and priorities (populate respective caches)
 - `get_statuses` - View test statuses (populates status cache)
-- `get_case_types`, `get_priorities` - View case types and priorities
 - `get_server_health` - Monitor server health, cache status, and rate limiter stats
 
 </details>
@@ -277,7 +292,7 @@ Add to your AI client's MCP config (Claude Desktop example):
          │
 ┌────────▼────────┐
 │   MCP Server    │  (This project - Docker container)
-│   61 Tools      │
+│   64 Tools      │
 └────────┬────────┘
          │ HTTP + Auth
          │
@@ -349,7 +364,7 @@ This MCP server follows security best practices:
 
 ## 🧪 Testing
 
-Comprehensive test suite with **61 test scripts** (one per tool) and **Makefile orchestration** for fast, organized testing:
+Comprehensive test suite with **64 test scripts** (one per tool) and **Makefile orchestration** for fast, organized testing:
 
 ```bash
 # Quick validation (3 critical tests, ~5s)
@@ -363,7 +378,7 @@ make test-metadata
 make test-cases
 ```
 
-**61 test scripts** organized by category:
+**64 test scripts** organized by category:
 - Metadata (priorities, statuses, case types, fields)
 - Projects, Suites, Sections
 - Test Cases (CRUD + bulk operations)
@@ -387,7 +402,7 @@ make test-cases
 - **Users & Roles API** - 3 new tools for user management and assignment workflows
 - **Milestones API** - 5 new tools for release management and timeline tracking
 - **Configurations API** - 3 new tools for multi-platform testing support
-- 61 total tools covering ~87% of TestRail API v2
+- 64 total tools covering ~87% of TestRail API v2
 - Enhanced documentation with comprehensive use cases and examples
 
 ### ✅ v1.4.0 (Released Jan 14, 2026)

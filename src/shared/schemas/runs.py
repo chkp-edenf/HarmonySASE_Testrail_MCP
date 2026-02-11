@@ -1,6 +1,6 @@
 """Test run-related schemas"""
 
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel, Field
 from .common import PaginatedResponse
 
@@ -45,15 +45,18 @@ class RunsResponse(PaginatedResponse):
 # Input schemas for MCP tool validation
 class GetRunsInput(BaseModel):
     """Input schema for getting test runs"""
-    project_id: str = Field(..., description="Project ID")
-    limit: Optional[str] = Field("250", description="Max results (default 250)")
+    project_id: Union[int, str] = Field(..., description="Project ID")
+    limit: Optional[Union[int, str]] = Field("250", description="Max results (default 250)")
     
     # Advanced filtering parameters (v1.4.0)
-    created_by: Optional[str] = Field(None, description="Filter by user ID who created the run")
-    created_after: Optional[str] = Field(None, description="Unix timestamp - runs created after this date")
-    created_before: Optional[str] = Field(None, description="Unix timestamp - runs created before this date")
-    milestone_id: Optional[str] = Field(None, description="Filter by milestone IDs (comma-separated for multiple)")
-    is_completed: Optional[str] = Field(None, description="Filter by completion status (true/false)")
+    created_by: Optional[Union[int, str]] = Field(None, description="Filter by user ID who created the run")
+    created_after: Optional[Union[int, str]] = Field(None, description="Unix timestamp - runs created after this date")
+    created_before: Optional[Union[int, str]] = Field(None, description="Unix timestamp - runs created before this date")
+    milestone_id: Optional[Union[int, str]] = Field(None, description="Filter by milestone IDs (comma-separated for multiple)")
+    is_completed: Optional[Union[bool, int, str]] = Field(None, description="Filter by completion status (true/false)")
+    suite_id: Optional[Union[int, str]] = Field(None, description="✅ Filter by suite ID (API-supported)")
+    refs_filter: Optional[str] = Field(None, description="✅ A single Reference ID (e.g. TR-a, 4291, etc.) (API-supported)")
+    offset: Optional[Union[int, str]] = Field(None, description="✅ Pagination offset (API-supported)")
 
 
 class GetRunInput(BaseModel):
@@ -70,6 +73,9 @@ class AddRunPayload(BaseModel):
     assignedto_id: Optional[int] = Field(None, description="User ID to assign the run to")
     include_all: Optional[bool] = Field(None, description="Include all test cases")
     case_ids: Optional[List[int]] = Field(None, description="List of case IDs to include")
+    refs: Optional[str] = Field(None, description="A comma-separated list of references/requirements — TestRail 6.1+")
+    start_on: Optional[int] = Field(None, description="The start date of a test run as UNIX timestamp")
+    due_on: Optional[int] = Field(None, description="The due date of a test run as UNIX timestamp")
     
     class Config:
         populate_by_name = True
@@ -82,6 +88,9 @@ class UpdateRunPayload(BaseModel):
     milestone_id: Optional[int] = Field(None, description="Milestone ID")
     include_all: Optional[bool] = Field(None, description="Include all test cases")
     case_ids: Optional[List[int]] = Field(None, description="List of case IDs to include")
+    refs: Optional[str] = Field(None, description="A comma-separated list of references/requirements — TestRail 6.1+")
+    start_on: Optional[int] = Field(None, description="The start date of a test run as UNIX timestamp")
+    due_on: Optional[int] = Field(None, description="The due date of a test run as UNIX timestamp")
     
     class Config:
         populate_by_name = True

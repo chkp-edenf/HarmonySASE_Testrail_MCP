@@ -4,20 +4,41 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.tests import GetTestsInput
 from .utils import create_success_response, create_error_response, format_test, truncate_output
 
 logger = logging.getLogger(__name__)
 
 
 async def handle_get_tests(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get tests for a test run"""
+    """Get tests for a test run with filtering support"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        run_id = int(arguments["run_id"])
-        status_id = int(arguments["status_id"]) if arguments.get("status_id") else None
+        # Validate and parse input
+        input_data = GetTestsInput(**arguments)
         
-        result = await client.tests.get_tests(run_id, status_id)
+        # Extract all parameters including new filters
+        run_id = int(input_data.run_id)
+        status_id = int(input_data.status_id) if input_data.status_id else None
+        assignedto_id = input_data.assignedto_id  # Already int from schema
+        priority_id = input_data.priority_id  # Already int from schema
+        type_id = input_data.type_id  # Already int from schema
+        limit = input_data.limit  # Already int from schema
+        offset = input_data.offset  # Already int from schema
+        with_data = input_data.with_data  # Already str from schema
+        
+        # Call client method with all parameters
+        result = await client.tests.get_tests(
+            run_id=run_id,
+            status_id=status_id,
+            assignedto_id=assignedto_id,
+            priority_id=priority_id,
+            type_id=type_id,
+            limit=limit,
+            offset=offset,
+            with_data=with_data
+        )
         tests = result.get("tests", [])
         
         if not tests:

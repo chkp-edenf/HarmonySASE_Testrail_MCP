@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.milestones import GetMilestonesInput
 from .utils import create_success_response, create_error_response, truncate_output
 
 logger = logging.getLogger(__name__)
@@ -53,20 +54,38 @@ def format_milestone(milestone: dict) -> str:
 
 
 async def handle_get_milestones(arguments: dict, client: TestRailClient) -> list[TextContent]:
-    """Get milestones for a project"""
+    """Get milestones for a project with filtering support"""
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        project_id = int(arguments["project_id"])
+        # Validate and parse input
+        input_data = GetMilestonesInput(**arguments)
         
-        # Optional filters
-        filters = {}
-        if arguments.get("is_completed") is not None:
-            filters["is_completed"] = 1 if arguments["is_completed"].lower() == "true" else 0
-        if arguments.get("is_started") is not None:
-            filters["is_started"] = 1 if arguments["is_started"].lower() == "true" else 0
+        # Extract all parameters including new filters
+        project_id = int(input_data.project_id)
         
-        result = await client.milestones.get_milestones(project_id, filters if filters else None)
+        # Extract explicit filter parameters (convert to boolean)
+        is_completed = None
+        if input_data.is_completed is not None:
+            is_completed = input_data.is_completed.lower() in ("true", "1")
+        
+        is_started = None
+        if input_data.is_started is not None:
+            is_started = input_data.is_started.lower() in ("true", "1")
+        
+        name = input_data.name
+        limit = int(input_data.limit) if input_data.limit else None
+        offset = int(input_data.offset) if input_data.offset else None
+        
+        # Call client method with all parameters
+        result = await client.milestones.get_milestones(
+            project_id=project_id,
+            is_completed=is_completed,
+            is_started=is_started,
+            name=name,
+            limit=limit,
+            offset=offset
+        )
         milestones = result.get("milestones", [])
         
         if not milestones:

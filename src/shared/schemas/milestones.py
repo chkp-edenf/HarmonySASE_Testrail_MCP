@@ -1,6 +1,6 @@
 """Milestone-related schemas"""
 
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel, Field
 from .common import PaginatedResponse
 
@@ -29,9 +29,12 @@ class MilestonesResponse(PaginatedResponse):
 # Input schemas for MCP tool validation
 class GetMilestonesInput(BaseModel):
     """Input schema for getting milestones"""
-    project_id: str = Field(..., description="Project ID")
-    is_completed: Optional[str] = Field(None, description="Filter by completion status (true/false)")
-    is_started: Optional[str] = Field(None, description="Filter by started status (true/false)")
+    project_id: Union[int, str] = Field(..., description="Project ID")
+    is_completed: Optional[Union[bool, int, str]] = Field(None, description="✅ Filter by completion status (true/false or 1/0) (API-supported)")
+    is_started: Optional[Union[bool, int, str]] = Field(None, description="✅ Filter by started status (true/false or 1/0) (API-supported)")
+    name: Optional[str] = Field(None, description="🔧 Filter by milestone name (client-side)")
+    limit: Optional[int] = Field(None, description="✅ The number of milestones to return (default 250) — TestRail 6.7+ (API-supported)")
+    offset: Optional[int] = Field(None, description="✅ Pagination offset — TestRail 6.7+ (API-supported)")
 
 
 class GetMilestoneInput(BaseModel):

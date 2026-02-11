@@ -4,6 +4,7 @@ import json
 import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
+from ...shared.schemas.projects import GetProjectsInput
 from .utils import create_success_response, create_error_response, format_project, truncate_output
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,18 @@ async def handle_get_projects(arguments: dict, client: TestRailClient) -> list[T
     logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
     
     try:
-        result = await client.projects.get_projects()
+        # Validate and parse input
+        input_data = GetProjectsInput(**arguments)
+        
+        is_completed = input_data.is_completed
+        limit = input_data.limit
+        offset = input_data.offset
+        
+        result = await client.projects.get_projects(
+            is_completed=is_completed,
+            limit=limit,
+            offset=offset
+        )
         projects = result.get("projects", [])
         
         if not projects:

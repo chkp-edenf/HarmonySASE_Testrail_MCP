@@ -10,6 +10,9 @@ class GetUsersInput(BaseModel):
         None,
         description="Filter by active status (true=active, false=inactive). Omit to get all users."
     )
+    project_id: Optional[str] = Field(None, description="✅ Filter by project ID - returns users assigned to the project (API-supported)")
+    name: Optional[str] = Field(None, description="🔧 Filter by user name (client-side)")
+    email: Optional[str] = Field(None, description="🔧 Filter by user email (client-side)")
 
 
 class GetUserInput(BaseModel):

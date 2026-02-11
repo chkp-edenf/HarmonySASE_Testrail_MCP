@@ -25,6 +25,7 @@ from .tests import Test, TestsResponse, GetTestsInput, GetTestInput
 from .sections import (
     Section,
     SectionsResponse,
+    GetSectionsInput,
     AddSectionPayload,
     UpdateSectionPayload,
     MoveSectionPayload
@@ -95,6 +96,7 @@ __all__ = [
     # Sections
     "Section",
     "SectionsResponse",
+    "GetSectionsInput",
     "AddSectionPayload",
     "UpdateSectionPayload",
     "MoveSectionPayload",

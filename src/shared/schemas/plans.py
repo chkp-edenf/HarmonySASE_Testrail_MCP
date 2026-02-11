@@ -1,6 +1,6 @@
 """Test plan-related schemas"""
 
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 from pydantic import BaseModel, Field
 from .common import PaginatedResponse
 
@@ -49,6 +49,26 @@ class Plan(BaseModel):
 class PlansResponse(PaginatedResponse):
     """Response for get_plans endpoint"""
     plans: List[Plan] = Field(default_factory=list)
+
+
+# Input schemas for MCP tool validation
+class GetPlansInput(BaseModel):
+    """Input schema for getting test plans"""
+    project_id: Union[int, str] = Field(..., description="Project ID")
+    limit: Optional[Union[int, str]] = Field("250", description="Max results (default 250)")
+    offset: Optional[Union[int, str]] = Field(None, description="✅ Pagination offset (API-supported)")
+    
+    # Advanced filtering parameters
+    created_by: Optional[Union[int, str]] = Field(None, description="✅ Filter by user ID who created the plan (API-supported)")
+    created_after: Optional[Union[int, str]] = Field(None, description="✅ Unix timestamp - plans created after this date (API-supported)")
+    created_before: Optional[Union[int, str]] = Field(None, description="✅ Unix timestamp - plans created before this date (API-supported)")
+    milestone_id: Optional[Union[int, str]] = Field(None, description="✅ Filter by milestone IDs (comma-separated for multiple) (API-supported)")
+    is_completed: Optional[Union[bool, int, str]] = Field(None, description="✅ Filter by completion status (true/false or 1/0) (API-supported)")
+
+
+class GetPlanInput(BaseModel):
+    """Input schema for getting a specific test plan"""
+    plan_id: str = Field(..., description="Test plan ID")
 
 
 class AddPlanPayload(BaseModel):

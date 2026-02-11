@@ -1,6 +1,6 @@
 """Project-related schemas"""
 
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic import BaseModel, Field
 from .common import PaginatedResponse
 
@@ -25,4 +25,6 @@ class ProjectsResponse(PaginatedResponse):
 
 class GetProjectsInput(BaseModel):
     """Input schema for getting projects"""
-    is_completed: Optional[bool] = Field(None, description="Filter by completion status")
+    is_completed: Optional[Union[bool, int]] = Field(None, description="✅ Filter by completion status (1=completed, 0=active) (API-supported)")
+    limit: Optional[int] = Field(None, description="✅ The number of projects to return (default 250) — TestRail 6.7+ (API-supported)")
+    offset: Optional[int] = Field(None, description="✅ Pagination offset — TestRail 6.7+ (API-supported)")
