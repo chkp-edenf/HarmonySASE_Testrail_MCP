@@ -1,23 +1,13 @@
 {
   "mcpServers": {
     "testrail": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e", "TESTRAIL_URL=https://your-instance.testrail.io",
-        "-e", "TESTRAIL_USERNAME=your-email@company.com",
-        "-e", "TESTRAIL_API_KEY=${input:testrail_api_token}",
-        "testrail_mcp"
-      ]
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/chkp-edenf/HarmonySASE_Testrail_MCP.git", "testrail-mcp"],
+      "env": {
+        "TESTRAIL_URL": "https://your-instance.testrail.io",
+        "TESTRAIL_USERNAME": "your-email@company.com",
+        "TESTRAIL_API_KEY": "your-api-key"
+      }
     }
-  },
-  "inputs": [
-    {
-      "type": "promptString",
-      "id": "testrail_api_token",
-      "description": "TestRail API token"
-    }
-  ]
+  }
 }
