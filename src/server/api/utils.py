@@ -5,6 +5,13 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+def require_fields(arguments: Dict[str, Any], fields: list, action: str) -> None:
+    """Validate that required fields are present in arguments."""
+    missing = [f for f in fields if not arguments.get(f)]
+    if missing:
+        raise ValueError(f"Missing required field(s) for {action}: {', '.join(missing)}")
+
+
 def create_success_response(message: str, data: Any) -> Dict[str, Any]:
     """Create standardized success response
     
