@@ -14,6 +14,7 @@ from .statuses import StatusesClient
 from .users import UsersClient
 from .milestones import MilestonesClient
 from .configs import ConfigsClient
+from .attachments import AttachmentsClient
 from .exceptions import (
     TestRailError,
     TestRailAPIError,
@@ -48,6 +49,7 @@ class TestRailClient(BaseAPIClient):
         self.users = UsersClient(self)
         self.milestones = MilestonesClient(self)
         self.configs = ConfigsClient(self)
+        self.attachments = AttachmentsClient(self)
 
 
 __all__ = [

@@ -237,6 +237,60 @@ class BaseAPIClient:
                 record_request_failure()
             raise last_exception
     
+    async def upload_file(self, endpoint: str, file_data: bytes, filename: str) -> Any:
+        """Upload a file to a TestRail endpoint (multipart/form-data).
+
+        Used by the Attachments API for uploading screenshots, documents, etc.
+        """
+        if self.rate_limiter:
+            await self.rate_limiter.acquire()
+
+        url = f"{self.base_url}?/api/v2/{endpoint}"
+
+        # Build multipart upload - must override Content-Type (remove JSON default)
+        headers = {k: v for k, v in self._headers.items() if k.lower() != "content-type"}
+        files = {"attachment": (filename, file_data)}
+
+        try:
+            from ...server.api.metrics import record_request_success, record_request_failure
+            metrics_available = True
+        except ImportError:
+            metrics_available = False
+
+        try:
+            response = await self._client.post(url, files=files, headers=headers)
+            response.raise_for_status()
+            if metrics_available:
+                record_request_success()
+            if response.text and response.text.strip():
+                return response.json()
+            return {}
+        except httpx.HTTPStatusError as e:
+            if metrics_available:
+                record_request_failure()
+            status = e.response.status_code
+            try:
+                error_data = e.response.json()
+                error_message = error_data.get("error", e.response.text)
+            except Exception:
+                error_message = e.response.text
+            if status == 401:
+                raise TestRailAuthenticationError(f"Authentication failed: {error_message}")
+            elif status == 403:
+                raise TestRailPermissionError(f"Permission denied: {error_message}")
+            elif status == 404:
+                raise TestRailNotFoundError(f"Resource not found: {error_message}")
+            else:
+                raise TestRailAPIError(status, f"Upload failed: {error_message}")
+        except httpx.TimeoutException:
+            if metrics_available:
+                record_request_failure()
+            raise TestRailTimeoutError(f"Upload timed out after {self.config.timeout}s")
+        except httpx.NetworkError as e:
+            if metrics_available:
+                record_request_failure()
+            raise TestRailNetworkError(f"Network error during upload: {str(e)}")
+
     async def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:
         """GET request"""
         return await self._request("GET", endpoint, params=params)
