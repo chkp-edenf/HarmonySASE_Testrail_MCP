@@ -247,8 +247,11 @@ class BaseAPIClient:
 
         url = f"{self.base_url}?/api/v2/{endpoint}"
 
-        # Build multipart upload - must override Content-Type (remove JSON default)
-        headers = {k: v for k, v in self._headers.items() if k.lower() != "content-type"}
+        # Build multipart upload with auth header only.
+        # Must use a separate httpx request (not self._client) because the
+        # persistent client has Content-Type: application/json as a default
+        # header which prevents httpx from auto-setting the multipart boundary.
+        auth_header = {k: v for k, v in self._headers.items() if k.lower() == "authorization"}
         files = {"attachment": (filename, file_data)}
 
         try:
@@ -258,7 +261,8 @@ class BaseAPIClient:
             metrics_available = False
 
         try:
-            response = await self._client.post(url, files=files, headers=headers)
+            async with httpx.AsyncClient(timeout=self.config.timeout) as upload_client:
+                response = await upload_client.post(url, files=files, headers=auth_header)
             response.raise_for_status()
             if metrics_available:
                 record_request_success()
