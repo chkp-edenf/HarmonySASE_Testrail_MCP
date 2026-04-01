@@ -46,6 +46,10 @@ from .configs import (
     handle_get_configs, handle_add_config_group, handle_add_config
 )
 from .health import handle_get_server_health
+from .attachments import (
+    handle_upload_attachment, handle_list_attachments,
+    handle_get_attachment, handle_delete_attachment
+)
 
 
 # Type alias for handler functions
@@ -149,6 +153,12 @@ def get_tool_handlers() -> dict[str, ToolHandler]:
         
         # Health
         "get_server_health": handle_get_server_health,
+
+        # Attachments
+        "upload_attachment": handle_upload_attachment,
+        "list_attachments": handle_list_attachments,
+        "get_attachment": handle_get_attachment,
+        "delete_attachment": handle_delete_attachment,
     }
 
 
@@ -220,5 +230,9 @@ __all__ = [
     "handle_add_config_group",
     "handle_add_config",
     "handle_get_server_health",
+    "handle_upload_attachment",
+    "handle_list_attachments",
+    "handle_get_attachment",
+    "handle_delete_attachment",
 ]
 

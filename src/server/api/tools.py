@@ -1049,6 +1049,70 @@ CROSS-REFERENCES:
             }
         ),
         
+        # ==================== ATTACHMENTS ====================
+        Tool(
+            name="upload_attachment",
+            description="""Upload a file (screenshot, document, etc.) to a TestRail entity.
+
+WHEN TO USE:
+- Attaching screenshots or evidence to test cases or results
+- Uploading documents to runs or plans
+
+ENTITY TYPES: case, result, run, plan
+
+EMBEDDING IMAGES IN CASES (2-step process):
+1. Upload the image with this tool (entity_type: case)
+2. Update the case field with an HTML img tag: <img src="index.php?/attachments/get/{attachment_id}" />
+
+SECURITY: Only allowed file extensions (.png, .jpg, .pdf, .doc, etc.). Sensitive paths are blocked.""",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entity_type": {"type": "string", "description": "Entity type: case, result, run, or plan", "enum": ["case", "result", "run", "plan"]},
+                    "entity_id": {"type": "string", "description": "Entity ID to attach to"},
+                    "file_path": {"type": "string", "description": "Absolute path to the file to upload"},
+                    "filename": {"type": "string", "description": "Override filename (optional, defaults to basename of file_path)"}
+                },
+                "required": ["entity_type", "entity_id", "file_path"]
+            }
+        ),
+        Tool(
+            name="list_attachments",
+            description="""List attachments for a TestRail entity.
+
+ENTITY TYPES: case, run, plan, test (not result)""",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entity_type": {"type": "string", "description": "Entity type: case, run, plan, or test", "enum": ["case", "run", "plan", "test"]},
+                    "entity_id": {"type": "string", "description": "Entity ID"}
+                },
+                "required": ["entity_type", "entity_id"]
+            }
+        ),
+        Tool(
+            name="get_attachment",
+            description="Get details of a specific attachment by ID (numeric or alphanumeric UUID on TestRail 7.1+)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "attachment_id": {"type": "string", "description": "Attachment ID (numeric or alphanumeric UUID)"}
+                },
+                "required": ["attachment_id"]
+            }
+        ),
+        Tool(
+            name="delete_attachment",
+            description="Delete an attachment by ID",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "attachment_id": {"type": "string", "description": "Attachment ID (numeric or alphanumeric UUID)"}
+                },
+                "required": ["attachment_id"]
+            }
+        ),
+
         # ==================== HEALTH CHECK ====================
         Tool(
             name="get_server_health",
