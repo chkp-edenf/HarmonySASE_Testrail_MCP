@@ -10,9 +10,15 @@
 !/mcp_config_example.json
 !/pyproject.toml
 !/.env.example
+!/install.sh
+!/install.ps1
+!/docs/
+!/tests/
 
 # Ensure hidden files in allowed directories are included if needed
 !/src/**
+!/docs/**
+!/tests/**
 
 # Python cache
 __pycache__/
