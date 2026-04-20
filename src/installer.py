@@ -99,14 +99,21 @@ def _build_claude_cli_command(
 
     Extracted for testability — the API-key value is IN this list; redaction
     happens separately in the logging layer.
+
+    IMPORTANT: the server name `testrail` MUST precede all `-e` flags.
+    `claude mcp add` declares `-e` as variadic (`<env...>`). When `-e` flags
+    appear before the server name, the parser greedily consumes the server
+    name into the last `-e` value list and the CLI rejects it with
+    "Invalid environment variable format: testrail". Verified empirically on
+    `claude` v2.1.114.
     """
     return [
         "claude", "mcp", "add",
         "--scope", scope,
+        "testrail",
         "-e", f"TESTRAIL_URL={url}",
         "-e", f"TESTRAIL_USERNAME={username}",
         "-e", f"TESTRAIL_API_KEY={api_key}",
-        "testrail",
         "--",
         "uvx", "--from", _build_uvx_from(ref),
         "testrail-mcp",

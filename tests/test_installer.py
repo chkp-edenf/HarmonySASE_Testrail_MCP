@@ -486,13 +486,15 @@ def test_claude_cli_writer_invokes_with_correct_args(fake_claude_cli) -> None:
     # Exactly one call recorded
     assert len(fake_claude_cli.calls) == 1
     captured = fake_claude_cli.calls[0]
+    # NOTE: server name `testrail` MUST precede all `-e` flags — see
+    # _build_claude_cli_command docstring. `-e` is variadic in claude mcp add.
     expected = [
         "claude", "mcp", "add",
         "--scope", "user",
+        "testrail",
         "-e", "TESTRAIL_URL=https://x.testrail.io",
         "-e", "TESTRAIL_USERNAME=u@x.com",
         "-e", f"TESTRAIL_API_KEY={key}",
-        "testrail",
         "--",
         "uvx", "--from",
         "git+https://github.com/chkp-edenf/HarmonySASE_Testrail_MCP.git@main",
