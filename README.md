@@ -21,6 +21,26 @@
 
 ---
 
+## Quick Install (Wizard)
+
+One-liner installers that detect your AI client, prompt for your TestRail credentials, optionally validate them, and write the MCP config for you — backing up any existing config first. Non-interactive mode available via flags.
+
+**macOS / Linux**
+```sh
+curl -LsSf https://raw.githubusercontent.com/chkp-edenf/HarmonySASE_Testrail_MCP/main/install.sh | sh
+```
+
+**Windows (PowerShell)**
+```powershell
+irm https://raw.githubusercontent.com/chkp-edenf/HarmonySASE_Testrail_MCP/main/install.ps1 | iex
+```
+
+The wizard walks you through picking Claude Code / Claude Desktop / both, entering the TestRail URL + login + API key, and writes the config.
+
+> **Prefer manual config?** The step-by-step Quick Start below still works — the wizard is optional.
+
+---
+
 ## Quick Start
 
 ### 1. Get Your TestRail API Key
