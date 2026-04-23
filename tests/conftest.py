@@ -21,6 +21,27 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
+# Module-level state reset (kody WARN — avoid --verbose bleeding between tests)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _reset_installer_module_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Reset module-level flags in src.installer between tests.
+
+    `_VERBOSE` is written by main() when --verbose is passed. Without this
+    reset, a test that invokes main() with --verbose would leave the flag
+    True for any subsequent test calling probe helpers directly. All Phase 4
+    tests go through main() so current order is safe, but this guards against
+    a future direct-call unit test seeing spurious `[probe]` output.
+    """
+    try:
+        import src.installer as _installer_mod  # noqa: PLC0415
+    except ImportError:
+        return
+    monkeypatch.setattr(_installer_mod, "_VERBOSE", False, raising=False)
+
+
+# ---------------------------------------------------------------------------
 # fake_claude_cli
 # ---------------------------------------------------------------------------
 
