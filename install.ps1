@@ -51,6 +51,16 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Log "uv installed: $(uv --version)"
 }
 
+# UV cache on %LOCALAPPDATA% is routinely locked by OneDrive sync and
+# Windows Defender / corporate EDR real-time scan, causing uv's
+# rename() to fail with "Access is denied (os error 5)" during the
+# archive step. Move the cache to %TEMP% (local, not scanned, not synced)
+# unless the user has already chosen a path explicitly.
+if (-not $env:UV_CACHE_DIR) {
+    $env:UV_CACHE_DIR = Join-Path $env:TEMP 'uvcache'
+    Write-Log "UV_CACHE_DIR defaulted to $env:UV_CACHE_DIR (avoids OneDrive/Defender lock contention)"
+}
+
 Write-Log "Running TestRail MCP wizard from git+${RepoUrl}@${Ref}"
 & uvx --from "git+${RepoUrl}@${Ref}" testrail-mcp-install @args
 exit $LASTEXITCODE
