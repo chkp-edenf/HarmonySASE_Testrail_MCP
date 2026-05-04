@@ -4,6 +4,7 @@
 # Except these files and directories
 !/.gitignore
 !/src/
+!/packages/
 !/README.md
 !/USER_GUIDE.md
 !/CLAUDE.md
@@ -17,6 +18,7 @@
 
 # Ensure hidden files in allowed directories are included if needed
 !/src/**
+!/packages/**
 !/docs/**
 !/tests/**
 

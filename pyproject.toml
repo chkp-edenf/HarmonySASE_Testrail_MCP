@@ -40,6 +40,13 @@ testrail-mcp-install = "src.installer:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
+# uv workspace declaration (plan-004 phase 5).
+# The root project keeps shipping `testrail-mcp` from `src/` until phase 5
+# finishes migrating code into the per-package layouts under `packages/`.
+# Members are pre-release skeletons (version 0.1.0-pre) for now.
+[tool.uv.workspace]
+members = ["packages/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
@@ -65,3 +72,9 @@ check_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 strict = false
+# packages/testrail-{core,mcp}/tests/ are sibling test trees inside the uv
+# workspace. Without explicit_package_bases, mypy reports "Duplicate module
+# named 'tests'" when scanning the whole repo. Each package owns its own
+# tests namespace; treating them as namespace packages keeps mypy happy.
+explicit_package_bases = true
+namespace_packages = true
