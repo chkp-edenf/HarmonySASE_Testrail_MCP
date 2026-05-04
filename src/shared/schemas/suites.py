@@ -1,27 +1,4 @@
-"""Suite-related schemas"""
+"""Re-export shim — relocated to testrail_core.schemas.suites (plan-004 phase 5.2)."""
+from testrail_core.schemas.suites import GetSuiteInput, GetSuitesInput, Suite
 
-from typing import Optional, List
-from pydantic import BaseModel, Field
-
-
-class Suite(BaseModel):
-    """TestRail Suite schema"""
-    id: int
-    name: str
-    description: Optional[str] = None
-    project_id: int
-    is_master: Optional[bool] = None
-    is_baseline: Optional[bool] = None
-    is_completed: Optional[bool] = None
-    completed_on: Optional[int] = None
-    url: str
-
-
-class GetSuitesInput(BaseModel):
-    """Input schema for getting suites"""
-    project_id: str = Field(..., description="Project ID")
-
-
-class GetSuiteInput(BaseModel):
-    """Input schema for getting a specific suite"""
-    suite_id: str = Field(..., description="Suite ID")
+__all__ = ["GetSuiteInput", "GetSuitesInput", "Suite"]
