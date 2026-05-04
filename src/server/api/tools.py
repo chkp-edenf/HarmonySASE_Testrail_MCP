@@ -6,10 +6,19 @@ Separating tool definitions from stdio.py keeps the entry point clean and focuse
 
 from mcp.types import Tool
 
+from .aliases import get_alias_tool_defs
+
 
 def get_all_tools() -> list[Tool]:
-    """Get all TestRail MCP tool definitions"""
-    return [
+    """Get all TestRail MCP tool definitions.
+
+    Returns the 62 canonical tool definitions plus, when
+    `TESTRAIL_LEGACY_ALIASES` is enabled, 28 bun913 compatibility
+    aliases. Aliases are listed alongside the canonical tools so
+    consumers migrating from `@bun913/mcp-testrail` see their existing
+    tool names available.
+    """
+    canonical_tools: list[Tool] = [
         # ==================== PROJECTS ====================
         Tool(
             name="get_projects",
@@ -1124,3 +1133,4 @@ ENTITY TYPES: case, run, plan, test (not result)""",
             }
         )
     ]
+    return canonical_tools + get_alias_tool_defs()
