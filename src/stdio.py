@@ -9,10 +9,10 @@ Architecture:
 - Shared Layer: src/shared/schemas/ - Pydantic models for validation
 """
 
-import os
-import sys
 import asyncio
 import logging
+import os
+import sys
 
 # Configure logging to stderr
 logging.basicConfig(
@@ -25,10 +25,12 @@ logger = logging.getLogger(__name__)
 # Import MCP SDK components
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.shared.exceptions import McpError
+from mcp.types import TextContent, Tool
 
 # Import client and modular tool registration
-from src.client.api import TestRailClient, ClientConfig
+from src.client.api import ClientConfig, TestRailClient
+from src.server.api.access_control import configure_access, enforce_access
 from src.server.api.rate_limiter import rate_limiter
 
 
@@ -63,6 +65,9 @@ async def main():
         # Validate environment
         validate_environment()
         logger.info("Environment variables validated")
+
+        # Resolve access-control flags (logs mode to stderr).
+        configure_access()
         
         # Normalize and configure API client
         raw_url = os.getenv("TESTRAIL_URL", "")
@@ -84,8 +89,8 @@ async def main():
         logger.info("MCP server created")
         
         # Import tool definitions and handler registry
-        from .server.api.tools import get_all_tools
         from .server.api import get_tool_handlers
+        from .server.api.tools import get_all_tools
         
         # Register tool schemas
         @server.list_tools()
@@ -101,13 +106,20 @@ async def main():
         async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             """Route tool calls to appropriate handlers"""
             logger.info(f"Tool called: {name}")
-            
+
+            # Access-control gate. Raises McpError before any handler work.
+            # Kept outside the try/except below so McpError propagates as a
+            # JSON-RPC error response rather than being wrapped as TextContent.
+            enforce_access(name)
+
             try:
                 handler = tool_handlers.get(name)
                 if handler:
                     return await handler(arguments, client)
                 else:
                     return [TextContent(type="text", text=f"Unknown tool: {name}")]
+            except McpError:
+                raise
             except Exception as e:
                 logger.error(f"Error calling tool {name}: {str(e)}")
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
