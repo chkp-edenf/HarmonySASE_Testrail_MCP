@@ -13,6 +13,7 @@ import asyncio
 import logging
 import os
 import sys
+from contextlib import suppress
 
 # Configure logging to stderr
 logging.basicConfig(
@@ -32,6 +33,7 @@ from mcp.types import TextContent, Tool
 from src.client.api import ClientConfig, TestRailClient
 from src.server.api.access_control import configure_access, enforce_access
 from src.server.api.aliases import configure_aliases, resolve as resolve_alias
+from src.server.api.cache_preload import configure_preload, preload_caches
 from src.server.api.rate_limiter import rate_limiter
 
 
@@ -70,6 +72,7 @@ async def main():
         # Resolve access-control flags (logs mode to stderr).
         configure_access()
         configure_aliases()
+        configure_preload()
         
         # Normalize and configure API client
         raw_url = os.getenv("TESTRAIL_URL", "")
@@ -85,6 +88,15 @@ async def main():
         # Initialize client with persistent HTTP connection and rate limiter
         client = TestRailClient(config, rate_limiter=rate_limiter)
         logger.info(f"TestRail client initialized for {base_url} with rate limiting (180 req/min)")
+
+        # Optional metadata-cache warm-up. No-op when TESTRAIL_PRELOAD_CACHE
+        # is off. Failures here log a warning and let the server start —
+        # caches will populate lazily on first tool use. Bounded by a
+        # 60s wall-clock so the server still boots if every TestRail
+        # endpoint hangs (httpx per-request timeout is 30s; 4 sequential
+        # fetchers worst-case approach 2 minutes).
+        with suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(preload_caches(client), timeout=60)
         
         # Create MCP server
         server = Server("testrail-mcp")
