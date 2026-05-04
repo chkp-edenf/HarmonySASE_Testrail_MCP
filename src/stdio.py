@@ -13,6 +13,7 @@ import asyncio
 import logging
 import os
 import sys
+from contextlib import suppress
 
 # Configure logging to stderr
 logging.basicConfig(
@@ -31,6 +32,8 @@ from mcp.types import TextContent, Tool
 # Import client and modular tool registration
 from src.client.api import ClientConfig, TestRailClient
 from src.server.api.access_control import configure_access, enforce_access
+from src.server.api.aliases import configure_aliases, resolve as resolve_alias
+from src.server.api.cache_preload import configure_preload, preload_caches
 from src.server.api.rate_limiter import rate_limiter
 
 
@@ -68,6 +71,8 @@ async def main():
 
         # Resolve access-control flags (logs mode to stderr).
         configure_access()
+        configure_aliases()
+        configure_preload()
         
         # Normalize and configure API client
         raw_url = os.getenv("TESTRAIL_URL", "")
@@ -83,6 +88,15 @@ async def main():
         # Initialize client with persistent HTTP connection and rate limiter
         client = TestRailClient(config, rate_limiter=rate_limiter)
         logger.info(f"TestRail client initialized for {base_url} with rate limiting (180 req/min)")
+
+        # Optional metadata-cache warm-up. No-op when TESTRAIL_PRELOAD_CACHE
+        # is off. Failures here log a warning and let the server start —
+        # caches will populate lazily on first tool use. Bounded by a
+        # 60s wall-clock so the server still boots if every TestRail
+        # endpoint hangs (httpx per-request timeout is 30s; 4 sequential
+        # fetchers worst-case approach 2 minutes).
+        with suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(preload_caches(client), timeout=60)
         
         # Create MCP server
         server = Server("testrail-mcp")
@@ -107,21 +121,27 @@ async def main():
             """Route tool calls to appropriate handlers"""
             logger.info(f"Tool called: {name}")
 
+            # Resolve bun913 / camelCase alias to canonical (name, args)
+            # BEFORE the gates fire, so read-only and allowlist checks
+            # always run against the canonical handler name. No-op when
+            # TESTRAIL_LEGACY_ALIASES=0 or when name is already canonical.
+            canonical_name, canonical_args = resolve_alias(name, arguments)
+
             # Access-control gate. Raises McpError before any handler work.
             # Kept outside the try/except below so McpError propagates as a
             # JSON-RPC error response rather than being wrapped as TextContent.
-            enforce_access(name)
+            enforce_access(canonical_name)
 
             try:
-                handler = tool_handlers.get(name)
+                handler = tool_handlers.get(canonical_name)
                 if handler:
-                    return await handler(arguments, client)
+                    return await handler(canonical_args, client)
                 else:
                     return [TextContent(type="text", text=f"Unknown tool: {name}")]
             except McpError:
                 raise
             except Exception as e:
-                logger.error(f"Error calling tool {name}: {str(e)}")
+                logger.error(f"Error calling tool {canonical_name}: {str(e)}")
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
         
         logger.info("Tool handler registered")
