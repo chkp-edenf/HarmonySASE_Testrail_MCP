@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "testrail-core"
-version = "0.1.0.dev0"
-description = "TestRail integration core library — HTTP client, caches, rate limit, retry, schemas"
+version = "2.0.0"
+description = "TestRail integration core library — HTTP client, caches, rate limit, retry, schemas. Protocol-agnostic; the MCP wrapper is shipped separately."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "Eden Fridman" }]
-keywords = ["testrail", "qa", "testing"]
+keywords = ["testrail", "qa", "testing", "client", "library"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python :: 3.11",

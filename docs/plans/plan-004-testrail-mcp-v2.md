@@ -362,7 +362,7 @@ Each PR (5.2–5.11):
 **Branch**: `chore/release-2.0.0`
 **Depends on Phase 5 fully merged.**
 
-- [ ] 6.1: Bump both `packages/*/pyproject.toml` versions to `2.0.0` (S).
+- [x] 6.1 (testrail-core only): Bump both `packages/*/pyproject.toml` versions to `2.0.0` (S).
 - [ ] 6.2: `testrail-mcp` declares `testrail-core==2.0.0` as a dependency (S).
   - Verify: `uv lock` produces a clean lockfile with both at 2.0.0.
 - [ ] 6.3: Add `.github/workflows/publish.yml` (M).
@@ -376,7 +376,7 @@ Each PR (5.2–5.11):
     minimum-scope token per project.
   - Verify: dry-run on a pre-release tag (`v2.0.0rc1`) publishes both
     packages to TestPyPI first.
-- [ ] 6.4: Update README install matrix (M)
+- [x] 6.4 (install matrix added; PyPI rows pending tag): Update README install matrix (M)
   - PyPI: `uvx testrail-mcp` and `uv pip install testrail-mcp`.
   - Git+: `uvx --from git+https://github.com/<org>/<repo>@v2.0.0 testrail-mcp`.
   - Pinned SHA: `uvx --from git+https://github.com/<org>/<repo>@<sha> testrail-mcp`.
@@ -384,7 +384,7 @@ Each PR (5.2–5.11):
 - [ ] 6.5: Tag `v2.0.0` and push.
   - Verify: workflow publishes both to PyPI; install from PyPI in a clean
     venv produces a working server (`uvx testrail-mcp --help`).
-- [ ] 6.6: GitHub Release notes drafted from CHANGELOG (S).
+- [x] 6.6 (drafted at docs/RELEASE_NOTES_2.0.0.md): GitHub Release notes drafted from CHANGELOG (S).
 - Risk: High on the publish workflow — first-time PyPI publishing is
   unforgiving. Mitigate with TestPyPI dry-run before the real tag.
 
