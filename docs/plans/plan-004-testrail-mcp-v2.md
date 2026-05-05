@@ -1,6 +1,6 @@
 ---
 number: 4
-title: TestRail MCP v2.0 — embedder-friendly hardening, library extraction, PyPI release
+title: TestRail MCP v2.0 — embedder-friendly hardening, library extraction
 date: 2026-05-04
 status: proposed
 needs_tdd: true
@@ -15,8 +15,8 @@ adr: ADR-003-testrail-core-extraction.md
 - **Phases 1–4** — shipped (PRs #4, #5, #6, #7 merged into `main`).
 - **Phase 5** — extraction complete. 16 stacked PRs (workspace-skeleton, cases canary, suites, sections, tests, runs, plans, results, case_fields, statuses, users, milestones, configs, projects, status_cache, attachments-schema + TestRailClient-aggregator) sit on local branches awaiting push. `testrail_core` is importable as a standalone module covering: HTTP client + retry + auth (`client/base_client.py`), `TestRailClient` aggregator (`client/__init__.py`), all 14 resource clients (`api/*`), all schemas (`schemas/*`), all four metadata caches (`cache/*`), exceptions, rate limiter, attachment handling. Tests: 349, mypy/ruff clean.
   - Plan-vs-reality slip: items 5.11 ("delete the now-empty `src/` tree") and the move of `health.py` / `metrics.py` / `cache_preload.py` into core are **not done by design**. Per ADR-003 those modules are server orchestration (read MCP runtime types, expose dispatcher state) and stay in `src/server/api/`. The `src/client/` and `src/shared/` paths remain as thin re-export shims so existing importers keep working through the v2 transition.
-- **Phase 6** — **blocked** on user-side prerequisites: (a) PyPI project registration for `testrail-core` + `testrail-mcp` names, (b) OIDC trusted-publisher config or `PYPI_API_TOKEN` repo secret, (c) the `.github/workflows/publish.yml` file (org policy bars autonomous CI/CD edits — needs explicit user approval). Code-side prep (version bumps to 2.0.0 + workspace `uv lock`) intentionally deferred until the user-side prereqs are in place; bumping versions before then would publish broken installs.
-- **Phase 7** — docs sync done in `docs/v2-sync` branch (this commit). README, CLAUDE.md, USER_GUIDE updated for the 68 flat tools + 4 new env vars + bun913 migration note + read-only + allowlist sections.
+- **Phase 6** — **dropped.** Public package distribution is out of scope for this release. v2.0.0 is consumed via `git+` URL pinned to the tag. If a future release decides to publish, the version bumps and dependency-pin layout (`testrail-mcp` 2.0.0 → `testrail-core==2.0.0` via workspace override) are already in place.
+- **Phase 7** — docs sync done. README, CLAUDE.md, USER_GUIDE updated for the 68 flat tools + 4 new env vars + bun913 migration note + read-only + allowlist sections. README install matrix lists git tag, git SHA, and local-source forms.
 
 ### Overview
 Harden the TestRail MCP for downstream consumers and embedders by adding
@@ -24,7 +24,7 @@ server-side write protection, a tool allowlist, compatibility aliases for an
 existing third-party fork, and an opt-in cache pre-warm. Extract the integration
 core into a separately importable Python package so consumers can reuse the
 HTTP client, caches, schemas, and rate limiter without spawning an MCP
-subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
+subprocess. Synchronise docs to match the v2 surface.
 
 ### Context (consumer-framed)
 - Some consumers want to expose this server to LLM agents while guaranteeing
@@ -41,9 +41,8 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
   subprocess. A separate `testrail-core` package solves this without forking
   the MCP server.
 - v2.0.0 is the right time to do all of this in one coordinated release —
-  the alias surface is a backwards-compatibility affordance, the package split
-  is a forwards-compatibility affordance, and PyPI publishing is the
-  distribution requirement that ties them together.
+  the alias surface is a backwards-compatibility affordance and the package
+  split is a forwards-compatibility affordance.
 
 ### Assumptions
 - Repository layout today is a single Python package under `src/`; `pyproject.toml`
@@ -57,10 +56,6 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
   (e.g. `add_case`, `delete_run`), not the user-facing consolidated names like
   `testrail_cases`. Action-based gating is out of scope for v2.0.
 - The bun913 alias list (28 entries) in the high-level plan is authoritative.
-- PyPI account / org for `testrail-mcp` and `testrail-core` is available, or
-  Phase 6 owner will register before tagging v2.0.0.
-- OIDC trusted-publishing on GitHub Actions is preferred but not required;
-  fall back to API token stored as a repo secret if OIDC is impractical.
 - Existing test suite uses `pytest` with `pytest.mark.parametrize` and is
   already structured per resource (per CLAUDE.md "Testing").
 
@@ -357,36 +352,18 @@ Each PR (5.2–5.11):
   `src/client/api/<moved-resource>` imports remain.
 - Risk: Low–Medium per PR (canary already paid the high-risk cost).
 
-### Phase 6: PyPI release v2.0.0
+### Phase 6: Distribution
 
-**Branch**: `chore/release-2.0.0`
-**Depends on Phase 5 fully merged.**
+**Out of scope for v2.0.0.** Consumers install from this repository via
+`git+` URL pinned to the `v2.0.0` tag (or a SHA for stricter pinning).
+The README install matrix lists git tag, git SHA, and local-source
+forms. The `testrail-core` package can be installed standalone via
+`uv pip install "testrail-core @ git+<url>@v2.0.0#subdirectory=packages/testrail-core"`.
 
-- [x] 6.1 (testrail-core only): Bump both `packages/*/pyproject.toml` versions to `2.0.0` (S).
-- [x] 6.2 (root renamed to testrail-mcp; testrail-core==2.0.0 pinned via workspace override): `testrail-mcp` declares `testrail-core==2.0.0` as a dependency (S).
-  - Verify: `uv lock` produces a clean lockfile with both at 2.0.0.
-- [ ] 6.3: Add `.github/workflows/publish.yml` (M).
-  - Trigger: `push` on tag matching `v*.*.*`.
-  - Two jobs in matrix or sequential: build + publish `testrail-core`, then
-    `testrail-mcp` (in that order, because the MCP depends on core).
-  - Use `pypa/gh-action-pypi-publish@release/v1`.
-  - Prefer OIDC trusted-publishing: configure both PyPI projects with the
-    repo + workflow name; no secret needed.
-  - Fallback: if OIDC is impractical, use `PYPI_API_TOKEN` repo secret with
-    minimum-scope token per project.
-  - Verify: dry-run on a pre-release tag (`v2.0.0rc1`) publishes both
-    packages to TestPyPI first.
-- [x] 6.4 (install matrix added; PyPI rows pending tag): Update README install matrix (M)
-  - PyPI: `uvx testrail-mcp` and `uv pip install testrail-mcp`.
-  - Git+: `uvx --from git+https://github.com/<org>/<repo>@v2.0.0 testrail-mcp`.
-  - Pinned SHA: `uvx --from git+https://github.com/<org>/<repo>@<sha> testrail-mcp`.
-  - Verify: each form runs end-to-end against a TestRail sandbox.
-- [ ] 6.5: Tag `v2.0.0` and push.
-  - Verify: workflow publishes both to PyPI; install from PyPI in a clean
-    venv produces a working server (`uvx testrail-mcp --help`).
-- [x] 6.6 (drafted at docs/RELEASE_NOTES_2.0.0.md): GitHub Release notes drafted from CHANGELOG (S).
-- Risk: High on the publish workflow — first-time PyPI publishing is
-  unforgiving. Mitigate with TestPyPI dry-run before the real tag.
+The packaging metadata is release-ready: root `pyproject.toml` declares
+`testrail-mcp` 2.0.0 with `testrail-core==2.0.0` as a runtime dep, the
+workspace `tool.uv.sources` override keeps local development resolving
+to the in-tree package. Any future decision to publish picks up here.
 
 ### Phase 7: Docs sync (skip-tier `/chekpoint`)
 
@@ -430,8 +407,8 @@ Each PR (5.2–5.11):
 - After Phase 5 final PR: `import testrail_core` from a fresh venv with only
   the core package installed; instantiate a client; round-trip a `get_cases`
   call against a sandbox.
-- After Phase 6: install `testrail-mcp` from PyPI in a fresh venv;
-  `uvx testrail-mcp` boots; tool list matches expected count.
+- After Phase 5 final PR: `uvx --from <repo-url>@v2.0.0 testrail-mcp`
+  boots; tool list matches expected count.
 
 **Regression evals** (eval-harness skill)
 - Capability: `pass^3` for read-only blocking the canonical 36 names.
@@ -450,10 +427,6 @@ Each PR (5.2–5.11):
   read-only is on (e.g. canonical resolution happens after gating).
   **Mitigation**: Phase 3 dispatcher integration test explicitly covers
   `addCase` (camelCase) under read-only — that test is the gate.
-- **Risk**: PyPI publish workflow leaks API token in logs.
-  **Mitigation**: prefer OIDC trusted-publishing (no secret in the repo);
-  if a token is required, scope to the single project and rotate after first
-  successful publish.
 - **Risk**: Cache warm-up adds startup latency for consumers who don't want
   it (e.g. CLI users running one-shot commands).
   **Mitigation**: opt-in only — default off. Documented in README env-var
@@ -494,8 +467,6 @@ Phase 5.1 (cases canary)    ── PR  ← blocking checkpoint
 Phase 5.2…5.11 (one resource per PR, can be sequential or lightly parallel
                  once 5.1 is merged; each PR independently green)
    ↓
-Phase 6 (PyPI publish v2.0.0) ── PR + tag
-   ↓
 Phase 7 (docs sync)           ── PR
 ```
 
@@ -512,9 +483,9 @@ Phase 7 (docs sync)           ── PR
 - [ ] `TESTRAIL_PRELOAD_CACHE=1` populates four caches at startup; failure
       degrades to a warning, not a crash.
 - [ ] `testrail-core` importable from a fresh venv with no MCP code present.
-- [ ] `testrail-mcp` from PyPI boots and serves the same tool surface as the
-      pre-split version.
-- [ ] README install matrix verified for PyPI, git+, and pinned-SHA forms.
+- [ ] `uvx --from <repo-url>@v2.0.0 testrail-mcp` boots and serves the same
+      tool surface as the pre-split version.
+- [ ] README install matrix verified for git+ tag and pinned-SHA forms.
 - [ ] No internal product names appear in `git log`, ADRs, code, or docs
       (audit at Phase 7).
 - [ ] `uv run pytest` green on the whole workspace at every phase boundary.
@@ -523,7 +494,7 @@ Phase 7 (docs sync)           ── PR
 
 ### Success Criteria
 
-- [ ] v2.0.0 published to PyPI for both `testrail-core` and `testrail-mcp`.
+- [ ] v2.0.0 tagged in git for both `testrail-core` and `testrail-mcp` (single tag, monorepo).
 - [ ] An external consumer can `uv pip install testrail-core` and use the
       HTTP client without any MCP machinery loaded.
 - [ ] An external consumer can run `uvx testrail-mcp` with

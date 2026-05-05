@@ -11,6 +11,14 @@ plan: plan-004-testrail-mcp-v2.md
 
 **Deciders**: TestRail MCP Contributors (owner), konstruct (planning)
 
+> **Update (2026-05-05):** Public package-index distribution is out of
+> scope for the v2.0.0 release. Discussion of PyPI publishing and OIDC
+> trusted-publishing below is preserved as decision context for a
+> potential future release; for v2.0.0 the package is consumed
+> exclusively via `git+` URLs pinned to a tag or SHA. The package
+> boundary, internal API, and workspace layout described in the decision
+> are unchanged — only the distribution channel.
+
 ## Context
 
 The TestRail MCP server today ships as a single Python package. The MCP

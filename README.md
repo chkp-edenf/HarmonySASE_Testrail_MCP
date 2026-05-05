@@ -238,20 +238,17 @@ If you're migrating from the bun913 fork, leave `TESTRAIL_LEGACY_ALIASES` at its
 
 ## Install Matrix
 
-Pick whichever form fits your workflow. All four launch the same server.
+Pick whichever form fits your workflow.
 
 | Source | Command | Pinning |
 |---|---|---|
-| **PyPI (latest)** | `uvx testrail-mcp` | tracks the newest published v2.x |
-| **PyPI (pinned)** | `uvx testrail-mcp==2.0.0` | exact version |
-| **Git (release tag)** | `uvx --from git+https://github.com/<your-org>/<your-repo>@v2.0.0 testrail-mcp` | exact tag, no PyPI required |
+| **Git (release tag)** | `uvx --from git+https://github.com/<your-org>/<your-repo>@v2.0.0 testrail-mcp` | exact tag |
 | **Git (pinned SHA)** | `uvx --from git+https://github.com/<your-org>/<your-repo>@<sha> testrail-mcp` | exact commit, audit-friendly |
 | **Local source** | `uvx --from /path/to/local/repo testrail-mcp` | live dev |
 
-Embedding `testrail-core` directly (no MCP):
+Embedding `testrail-core` directly (no MCP) from the workspace:
 
 ```python
-# uv pip install testrail-core
 from testrail_core.client import TestRailClient, ClientConfig
 from testrail_core.rate_limiter import rate_limiter
 
@@ -264,7 +261,11 @@ client = TestRailClient(config, rate_limiter=rate_limiter)
 projects = await client.projects.get_projects()
 ```
 
-> The PyPI install paths require v2.0.0 to be tagged and the publish workflow to run. Until then, use the `git+` forms above.
+Install `testrail-core` standalone via git URL with a subdirectory selector:
+
+```bash
+uv pip install "testrail-core @ git+https://github.com/<your-org>/<your-repo>.git@v2.0.0#subdirectory=packages/testrail-core"
+```
 
 ---
 

@@ -35,7 +35,7 @@ with what the dispatcher actually exposes.
 
 - README, CLAUDE.md, USER_GUIDE rewritten for the flat 68-tool surface and the four new env vars.
 - USER_GUIDE adds three new sections: **Read-Only Mode**, **Restricting the Tool Surface**, **bun913 Migration**.
-- `testrail-core` package version bumped to `2.0.0` for first PyPI release.
+- `testrail-core` package version bumped to `2.0.0`.
 
 ## Deprecated
 
@@ -47,8 +47,8 @@ release.
 
 ## Migration
 
-**From v1.x** — no code or tool-name changes needed. Once v2.0.0 is on
-PyPI, replace the `git+` URL pin with `uvx testrail-mcp`.
+**From v1.x** — no code or tool-name changes needed. Pin to `@v2.0.0`
+in your `git+` URL.
 
 **From the bun913 fork** — keep `TESTRAIL_LEGACY_ALIASES=1` (the default)
 so your existing camelCase tool names continue to resolve. Migrate to the
@@ -68,15 +68,7 @@ canonical snake_case names at your own pace, then flip the flag to `0`.
 
 `testrail-mcp` declares `testrail-core==2.0.0` as a runtime dep; the
 workspace `tool.uv.sources` overrides this for local development so
-both move together without a PyPI round-trip.
-
-## Known gaps
-
-- The PyPI publish workflow (`.github/workflows/publish.yml`) is not
-  included — org policy requires explicit owner authorship for CI/CD
-  changes. To publish: configure OIDC trusted-publishing on PyPI for
-  both `testrail-core` and `testrail-mcp`, add the workflow, then tag
-  `v2.0.0`.
+both move together when consumed from this repository.
 
 ## Acknowledgments
 
