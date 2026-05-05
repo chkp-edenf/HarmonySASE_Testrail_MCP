@@ -10,6 +10,14 @@ adr: ADR-003-testrail-core-extraction.md
 
 ## Plan: TestRail MCP v2.0 [konstruct]
 
+### Status (2026-05-05)
+
+- **Phases 1–4** — shipped (PRs #4, #5, #6, #7 merged into `main`).
+- **Phase 5** — extraction complete. 16 stacked PRs (workspace-skeleton, cases canary, suites, sections, tests, runs, plans, results, case_fields, statuses, users, milestones, configs, projects, status_cache, attachments-schema + TestRailClient-aggregator) sit on local branches awaiting push. `testrail_core` is importable as a standalone module covering: HTTP client + retry + auth (`client/base_client.py`), `TestRailClient` aggregator (`client/__init__.py`), all 14 resource clients (`api/*`), all schemas (`schemas/*`), all four metadata caches (`cache/*`), exceptions, rate limiter, attachment handling. Tests: 349, mypy/ruff clean.
+  - Plan-vs-reality slip: items 5.11 ("delete the now-empty `src/` tree") and the move of `health.py` / `metrics.py` / `cache_preload.py` into core are **not done by design**. Per ADR-003 those modules are server orchestration (read MCP runtime types, expose dispatcher state) and stay in `src/server/api/`. The `src/client/` and `src/shared/` paths remain as thin re-export shims so existing importers keep working through the v2 transition.
+- **Phase 6** — **blocked** on user-side prerequisites: (a) PyPI project registration for `testrail-core` + `testrail-mcp` names, (b) OIDC trusted-publisher config or `PYPI_API_TOKEN` repo secret, (c) the `.github/workflows/publish.yml` file (org policy bars autonomous CI/CD edits — needs explicit user approval). Code-side prep (version bumps to 2.0.0 + workspace `uv lock`) intentionally deferred until the user-side prereqs are in place; bumping versions before then would publish broken installs.
+- **Phase 7** — docs sync done in `docs/v2-sync` branch (this commit). README, CLAUDE.md, USER_GUIDE updated for the 68 flat tools + 4 new env vars + bun913 migration note + read-only + allowlist sections.
+
 ### Overview
 Harden the TestRail MCP for downstream consumers and embedders by adding
 server-side write protection, a tool allowlist, compatibility aliases for an
@@ -67,7 +75,7 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
 
 ### Phase 0: Research
 
-- [ ] Step 0.1: Enumerate the exact set of write tools (S)
+- [x] Step 0.1: Enumerate the exact set of write tools (S)
   - Action: grep the dispatcher / handler files for every `add_*`, `update_*`,
     `delete_*`, `move_*`, `copy_*`, `close_*`, `upload_*`, `add_config`,
     `add_config_group` route.
@@ -76,14 +84,14 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
   - Verify: produce a checked-in list of 36 tool names matching the spec; if
     the count diverges, update the spec before Phase 1 starts.
   - Risk: Low.
-- [ ] Step 0.2: Confirm dispatcher entry point and how tool names reach it (S)
+- [x] Step 0.2: Confirm dispatcher entry point and how tool names reach it (S)
   - Verify: the boundary where a name becomes an executed handler is a single
     function (or a small set). Phase 1's gate must live there.
-- [ ] Step 0.3: Inventory cache modules and the exact APIs Phase 4 needs to call (S)
+- [x] Step 0.3: Inventory cache modules and the exact APIs Phase 4 needs to call (S)
   - Files: `src/server/api/field_cache.py`, `status_cache.py`, `priority_cache.py`,
     `case_type_cache.py`, plus the metadata handler.
   - Verify: a one-liner per cache describing the warm-up entry function.
-- [ ] Step 0.4: Read existing tests to confirm fixture and parametrize patterns (S)
+- [x] Step 0.4: Read existing tests to confirm fixture and parametrize patterns (S)
   - Files: `tests/` (whichever resource files exist).
   - Verify: a note on whether new tests should subclass an existing fixture
     or stand alone.
@@ -93,18 +101,18 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
 **Branch**: `feat/read-only-mode`
 **PR scope**: env flag, dispatcher gate, startup log, tests, env-var doc stub.
 
-- [ ] Step 1.1: Add module-level boolean read once at import time (S)
+- [x] Step 1.1: Add module-level boolean read once at import time (S)
   - File: `src/server/api/__init__.py` (or `src/server/api/config.py` if a
     config module is preferred — Phase 0.2 will tell us).
   - Behavior: `READ_ONLY = os.getenv("TESTRAIL_READ_ONLY", "").strip().lower() in {"1","true","yes","on"}`.
   - Verify: import the module in a unit test, assert the flag reflects the env.
   - Risk: Low.
-- [ ] Step 1.2: Define the canonical set of 36 write tool names as a frozen set (S)
+- [x] Step 1.2: Define the canonical set of 36 write tool names as a frozen set (S)
   - File: same module as 1.1, constant `WRITE_TOOLS: frozenset[str]`.
   - Verify: unit test asserts `len(WRITE_TOOLS) == 36` and that each name
     routes to a handler in the dispatcher.
   - Depends on: 0.1.
-- [ ] Step 1.3: Insert the gate in the dispatcher (M)
+- [x] Step 1.3: Insert the gate in the dispatcher (M)
   - Behavior: when `READ_ONLY is True` and the requested tool is in
     `WRITE_TOOLS`, raise an MCP error with code `-32603` and message exactly:
     `TestRail MCP is in read-only mode (TESTRAIL_READ_ONLY=1). Tool '<name>' is blocked.`
@@ -112,12 +120,12 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
     asserts code + message.
   - Depends on: 1.1, 1.2.
   - Risk: Medium (must not change the success path for read tools).
-- [ ] Step 1.4: Stderr startup log when read-only is active (S)
+- [x] Step 1.4: Stderr startup log when read-only is active (S)
   - Behavior: in `src/stdio.py` startup path, after env validation, write
     `TESTRAIL_READ_ONLY=1 — write tools blocked` to stderr. Silent when off.
   - Verify: capture stderr in a test; assert presence/absence by env state.
   - Depends on: 1.1.
-- [ ] Step 1.5: Tests (M)
+- [x] Step 1.5: Tests (M)
   - File: `tests/server/test_read_only_gate.py`.
   - Parametrize matrix: 36 write tools (each blocked when on, each allowed
     when off) + a sample of 5 read tools (each unaffected when on).
@@ -125,10 +133,10 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
   - Verify: `uv run pytest tests/server/test_read_only_gate.py -v` passes;
     each parametrize id is human-readable (tool name).
   - Depends on: 1.3, 1.4.
-- [ ] Step 1.6: Stub env-var documentation in `.env.example` (S)
+- [x] Step 1.6: Stub env-var documentation in `.env.example` (S)
   - Add `TESTRAIL_READ_ONLY=` (empty default, comment explains values).
   - Verify: file diff is one block; no other vars touched.
-- [ ] Step 1.7: PR opens with conventional commit `feat(server): add TESTRAIL_READ_ONLY write-protection gate` and a Test plan section.
+- [x] Step 1.7: PR opens with conventional commit `feat(server): add TESTRAIL_READ_ONLY write-protection gate` and a Test plan section.
 
 ### Phase 2: `TESTRAIL_ALLOWED_TOOLS` allowlist
 
@@ -136,14 +144,14 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
 **PR scope**: env parsing, dispatcher gate (chained after read-only), tests, doc.
 **Depends on Phase 1 merged.**
 
-- [ ] Step 2.1: CSV parser, parsed once at startup (S)
+- [x] Step 2.1: CSV parser, parsed once at startup (S)
   - File: same config location as Phase 1.
   - Behavior: `ALLOWED_TOOLS: frozenset[str] | None`. `None` (env unset or empty
     after strip) means "all allowed". Whitespace tolerant: split on `,`, strip
     each entry, drop empty entries, lowercase preserved as written.
   - Verify: unit test for empty/unset/whitespace/duplicates/single/multi.
   - Risk: Low.
-- [ ] Step 2.2: Dispatcher gate (M)
+- [x] Step 2.2: Dispatcher gate (M)
   - Behavior: chain order is **read-only first, allowlist second**. If
     `ALLOWED_TOOLS is not None` and the tool is not in it, raise MCP error
     `-32601` with message `Tool '<name>' is not in TESTRAIL_ALLOWED_TOOLS allowlist.`
@@ -153,7 +161,7 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
     Phase 1's message (precedence), and a read tool excluded by allowlist sees
     Phase 2's message.
   - Depends on: 2.1, Phase 1.
-- [ ] Step 2.3: Tests (M)
+- [x] Step 2.3: Tests (M)
   - File: `tests/server/test_allowlist.py`.
   - Parametrize cases:
     - allowlist unset → all tools allowed
@@ -165,8 +173,8 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
     - read-only off + allowlist excludes a write tool → blocked by allowlist
   - Verify: `uv run pytest tests/server/test_allowlist.py -v` passes.
   - Depends on: 2.2.
-- [ ] Step 2.4: `.env.example` entry for `TESTRAIL_ALLOWED_TOOLS` (S).
-- [ ] Step 2.5: PR — `feat(server): add TESTRAIL_ALLOWED_TOOLS tool allowlist`.
+- [x] Step 2.4: `.env.example` entry for `TESTRAIL_ALLOWED_TOOLS` (S).
+- [x] Step 2.5: PR — `feat(server): add TESTRAIL_ALLOWED_TOOLS tool allowlist`.
 
 ### Phase 3: bun913 compatibility aliases
 
@@ -174,24 +182,24 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
 **PR scope**: alias map, request-rewrite layer, env gate, tests, migration note.
 **Depends on Phase 2 merged.**
 
-- [ ] Step 3.1: Codify the 28-entry alias map (S)
+- [x] Step 3.1: Codify the 28-entry alias map (S)
   - File: `src/server/api/aliases.py`.
   - Constant: `BUN913_ALIASES: dict[str, str]` mapping camelCase legacy name →
     canonical snake_case name.
   - Verify: unit test asserts `len(BUN913_ALIASES) == 28` and every value is a
     valid registered tool name (cross-checked against the dispatcher registry).
   - Risk: Low.
-- [ ] Step 3.2: Generic camelCase→snake_case translator (S)
+- [x] Step 3.2: Generic camelCase→snake_case translator (S)
   - Behavior: only used as a fallback when an incoming tool name is not in the
     explicit alias map and not in the canonical registry. Pure function, no
     side effects.
   - Verify: unit tests for `addCase`→`add_case`, `getCasesByIds`→`get_cases_by_ids`,
     `bulkAddForCases`→`bulk_add_for_cases`, idempotency on already-snake_case input.
-- [ ] Step 3.3: Env gate `TESTRAIL_LEGACY_ALIASES` (S)
+- [x] Step 3.3: Env gate `TESTRAIL_LEGACY_ALIASES` (S)
   - Default `1` (aliases on). `0` disables both the explicit map and the
     generic translator.
   - Verify: unit test confirms gate behavior.
-- [ ] Step 3.4: Wire alias resolution into the dispatcher entry (M)
+- [x] Step 3.4: Wire alias resolution into the dispatcher entry (M)
   - Order of operations on each incoming call:
     1. If aliases enabled, resolve incoming name → canonical (explicit map
        first, then generic translator if name still unknown).
@@ -203,7 +211,7 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
     allows `addCase` calls).
   - Depends on: 3.1, 3.2, 3.3, Phase 1, Phase 2.
   - Risk: Medium (precedence matters; mistakes here defeat the gates).
-- [ ] Step 3.5: Tests (M)
+- [x] Step 3.5: Tests (M)
   - File: `tests/server/test_aliases.py`.
   - Parametrize:
     - all 28 explicit aliases resolve correctly
@@ -213,8 +221,8 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
     - allowlist + alias → canonical name is what gets gate-checked
   - Verify: `uv run pytest tests/server/test_aliases.py -v` passes.
   - Depends on: 3.4.
-- [ ] Step 3.6: `.env.example` entry for `TESTRAIL_LEGACY_ALIASES` (S).
-- [ ] Step 3.7: PR — `feat(server): add bun913 compatibility aliases (TESTRAIL_LEGACY_ALIASES)`.
+- [x] Step 3.6: `.env.example` entry for `TESTRAIL_LEGACY_ALIASES` (S).
+- [x] Step 3.7: PR — `feat(server): add bun913 compatibility aliases (TESTRAIL_LEGACY_ALIASES)`.
 
 ### Phase 4: `TESTRAIL_PRELOAD_CACHE` startup warm-up
 
@@ -222,10 +230,10 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
 **PR scope**: opt-in env flag, warm-up call site, failure-as-warning, tests.
 **Depends on Phase 3 merged (or Phase 2 — no Phase 3 dependency, but ship in order).**
 
-- [ ] Step 4.1: Add the env flag (S)
+- [x] Step 4.1: Add the env flag (S)
   - Default off. Same parsing convention as Phase 1.
   - Verify: unit test.
-- [ ] Step 4.2: Warm-up function (M)
+- [x] Step 4.2: Warm-up function (M)
   - File: `src/server/api/cache_warmup.py` (new).
   - Behavior: call the existing fetchers for `case_fields`, `case_types`,
     `priorities`, `statuses`, `templates` in sequence (project_id is required —
@@ -237,19 +245,19 @@ subprocess. Publish both packages to PyPI as v2.0.0 and synchronise docs.
   - Verify: unit test with a stubbed client where one fetcher raises — assert
     server start completes and warning is emitted.
   - Risk: Medium — must not regress startup time when the flag is off.
-- [ ] Step 4.3: Call from `src/stdio.py` startup, after client init, before
+- [x] Step 4.3: Call from `src/stdio.py` startup, after client init, before
       registering tools (S).
   - Verify: integration test confirms warm-up runs only when flag is on.
   - Depends on: 4.1, 4.2.
-- [ ] Step 4.4: Tests (M)
+- [x] Step 4.4: Tests (M)
   - File: `tests/server/test_cache_warmup.py`.
   - Cases: flag off → no fetcher called; flag on + project_id → all five
     fetchers called once; flag on + project_id missing → warning + skip;
     flag on + one fetcher raises → other four still called, server still starts.
   - Verify: `uv run pytest tests/server/test_cache_warmup.py -v` passes.
-- [ ] Step 4.5: `.env.example` entries for `TESTRAIL_PRELOAD_CACHE` and
+- [x] Step 4.5: `.env.example` entries for `TESTRAIL_PRELOAD_CACHE` and
       `TESTRAIL_PRELOAD_PROJECT_ID` (S).
-- [ ] Step 4.6: PR — `feat(server): add TESTRAIL_PRELOAD_CACHE startup warm-up`.
+- [x] Step 4.6: PR — `feat(server): add TESTRAIL_PRELOAD_CACHE startup warm-up`.
 
 ### Phase 5: Extract `testrail-core` shared library
 
@@ -284,19 +292,19 @@ uv.lock
 
 **Branch**: `refactor/workspace-skeleton`
 
-- [ ] 5.0.1: Add ADR `docs/decisions/ADR-003-testrail-core-extraction.md`
+- [x] 5.0.1: Add ADR `docs/decisions/ADR-003-testrail-core-extraction.md`
   (already drafted alongside this plan).
-- [ ] 5.0.2: Create `packages/testrail-core/` and `packages/testrail-mcp/`
+- [x] 5.0.2: Create `packages/testrail-core/` and `packages/testrail-mcp/`
   with empty `pyproject.toml` files and `src/` skeletons.
-- [ ] 5.0.3: Convert root `pyproject.toml` to a uv workspace
+- [x] 5.0.3: Convert root `pyproject.toml` to a uv workspace
   (`[tool.uv.workspace] members = ["packages/*"]`); keep top-level metadata
   minimal.
-- [ ] 5.0.4: Both packages declare version `0.1.0-pre` so PR 5.0 publishes
+- [x] 5.0.4: Both packages declare version `0.1.0-pre` so PR 5.0 publishes
   nothing; they bump to `2.0.0` only at Phase 6.
-- [ ] 5.0.5: `uv sync` and `uv run pytest` still pass against the existing
+- [x] 5.0.5: `uv sync` and `uv run pytest` still pass against the existing
   test suite (which still imports from `src/`).
-- [ ] 5.0.6: Verify: CI green, no consumer-visible behavior change.
-- [ ] 5.0.7: PR — `refactor: introduce uv workspace skeleton (testrail-core/testrail-mcp split)`.
+- [x] 5.0.6: Verify: CI green, no consumer-visible behavior change.
+- [x] 5.0.7: PR — `refactor: introduce uv workspace skeleton (testrail-core/testrail-mcp split)`.
 - Risk: Medium — workspace migration can break editable installs; canary
   before any code moves.
 
@@ -304,20 +312,20 @@ uv.lock
 
 **Branch**: `refactor/extract-cases`
 
-- [ ] 5.1.1: Move client `src/client/api/cases.py` →
+- [x] 5.1.1: Move client `src/client/api/cases.py` →
   `packages/testrail-core/src/testrail_core/api/cases.py`.
-- [ ] 5.1.2: Move case schemas `src/shared/schemas/cases.py` →
+- [x] 5.1.2: Move case schemas `src/shared/schemas/cases.py` →
   `packages/testrail-core/src/testrail_core/schemas/cases.py`.
-- [ ] 5.1.3: Move base infrastructure required by cases:
+- [x] 5.1.3: Move base infrastructure required by cases:
   `base_client.py`, `exceptions.py`, the relevant cache module(s),
   `rate_limiter.py`, `attachments.py` (cases tool uploads attachments).
-- [ ] 5.1.4: Update imports in `src/server/api/cases.py` and the dispatcher
+- [x] 5.1.4: Update imports in `src/server/api/cases.py` and the dispatcher
   to point at `testrail_core`.
-- [ ] 5.1.5: Move existing case-client unit tests under
+- [x] 5.1.5: Move existing case-client unit tests under
   `packages/testrail-core/tests/`; leave server-handler tests in the MCP package.
-- [ ] 5.1.6: Verify: `uv run pytest` (whole workspace) green; `testrail_core`
+- [x] 5.1.6: Verify: `uv run pytest` (whole workspace) green; `testrail_core`
   importable as a standalone module (`uv run python -c "from testrail_core.api.cases import CasesClient"`).
-- [ ] 5.1.7: PR — `refactor(core): extract cases resource into testrail-core (canary)`.
+- [x] 5.1.7: PR — `refactor(core): extract cases resource into testrail-core (canary)`.
 - Risk: High — first move; surfaces shared-base-client coupling. Treat as a
   blocking checkpoint: do not open PR 5.2 until 5.1 is merged and CI is green
   on `main`.
@@ -328,16 +336,16 @@ Order chosen to minimise inter-resource dependencies (suites/sections before
 runs/plans, results last because they reference runs+cases, attachments
 already lives in core after 5.1):
 
-- [ ] 5.2 — `refactor/extract-suites` — move `suites` client + schemas + tests.
-- [ ] 5.3 — `refactor/extract-sections` — move `sections`.
-- [ ] 5.4 — `refactor/extract-runs` — move `runs` (+ `tests` resource if coupled).
-- [ ] 5.5 — `refactor/extract-plans` — move `plans` + `plan_entries`.
-- [ ] 5.6 — `refactor/extract-results` — move `results`.
-- [ ] 5.7 — `refactor/extract-metadata` — move `metadata` (templates, statuses lookup, etc.).
-- [ ] 5.8 — `refactor/extract-users` — move `users`.
-- [ ] 5.9 — `refactor/extract-milestones` — move `milestones`.
-- [ ] 5.10 — `refactor/extract-configs` — move `configs`.
-- [ ] 5.11 — `refactor/extract-health` — move health check + metrics shared bits;
+- [x] 5.2 — `refactor/extract-suites` — move `suites` client + schemas + tests.
+- [x] 5.3 — `refactor/extract-sections` — move `sections`.
+- [x] 5.4 — `refactor/extract-runs` — move `runs` (+ `tests` resource if coupled).
+- [x] 5.5 — `refactor/extract-plans` — move `plans` + `plan_entries`.
+- [x] 5.6 — `refactor/extract-results` — move `results`.
+- [x] 5.7 — `refactor/extract-metadata` — move `metadata` (templates, statuses lookup, etc.).
+- [x] 5.8 — `refactor/extract-users` — move `users`.
+- [x] 5.9 — `refactor/extract-milestones` — move `milestones`.
+- [x] 5.10 — `refactor/extract-configs` — move `configs`.
+- [x] 5.11 — `refactor/extract-health` — move health check + metrics shared bits;
   delete the now-empty `src/` tree; final cleanup PR.
 
 Each PR (5.2–5.11):
@@ -384,7 +392,7 @@ Each PR (5.2–5.11):
 
 **Branch**: `docs/v2-sync`
 
-- [ ] 7.1: Update root `CLAUDE.md` (M)
+- [x] 7.1: Update root `CLAUDE.md` (M)
   - Drop the "15 consolidated action-based tools" framing where it describes
     the runtime surface; document that the dispatcher exposes the underlying
     flat tool registry (62 tools — verify exact count from Phase 0.1).
@@ -392,17 +400,17 @@ Each PR (5.2–5.11):
     `TESTRAIL_READ_ONLY`, `TESTRAIL_ALLOWED_TOOLS`, `TESTRAIL_LEGACY_ALIASES`,
     `TESTRAIL_PRELOAD_CACHE`, `TESTRAIL_PRELOAD_PROJECT_ID`.
   - Verify: diff reads cleanly; no stale references to removed concepts.
-- [ ] 7.2: Update `README.md` (M)
+- [x] 7.2: Update `README.md` (M)
   - Env-var matrix table.
   - bun913 migration note: "If you are migrating from the bun913 fork, leave
     `TESTRAIL_LEGACY_ALIASES` at its default of `1` — your existing tool
     names continue to work. Set to `0` once your client is fully migrated."
   - Install matrix from Phase 6.4.
-- [ ] 7.3: Update `USER_GUIDE.md` (S)
+- [x] 7.3: Update `USER_GUIDE.md` (S)
   - New "Read-only mode" section.
   - New "Restricting the tool surface" section.
-- [ ] 7.4: Skip-tier `/chekpoint` because docs-only.
-- [ ] 7.5: PR — `docs(v2): sync README, CLAUDE.md, USER_GUIDE for v2.0.0`.
+- [x] 7.4: Skip-tier `/chekpoint` because docs-only.
+- [x] 7.5: PR — `docs(v2): sync README, CLAUDE.md, USER_GUIDE for v2.0.0`.
 
 ### Testing Strategy
 

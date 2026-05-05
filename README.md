@@ -12,12 +12,15 @@
 
 ## Highlights
 
-- **15 Consolidated Tools** covering 65+ operations across 12 resource categories
-- **Attachment Support** — upload screenshots and files to cases, results, runs, plans
-- **100% Portable** — works with ANY TestRail instance (no hardcoded custom fields)
-- **Smart Field Handling** — say "Regression" instead of memorizing numeric IDs
-- **Auto Rate-Limited** — built-in throttling (180 req/min) protects your API quota
-- **Zero Setup Friction** — one `uvx` command, no Docker required
+- **68 flat MCP tools** covering every TestRail v2 endpoint (cases, runs, plans, results, attachments, …)
+- **Server-side gates** — `TESTRAIL_READ_ONLY` write-block, `TESTRAIL_ALLOWED_TOOLS` allowlist
+- **bun913-compat aliases** — drop-in replacement for the bun913 fork (gated by `TESTRAIL_LEGACY_ALIASES`, default on)
+- **Attachment support** — upload screenshots and files to cases, results, runs, plans
+- **100% portable** — works with ANY TestRail instance (no hardcoded custom fields)
+- **Smart field handling** — say "Regression" instead of memorizing numeric IDs
+- **Auto rate-limited** — built-in throttling (180 req/min) protects your API quota
+- **Optional cache warm-up** — `TESTRAIL_PRELOAD_CACHE=1` pre-fetches metadata at startup
+- **Zero setup friction** — one `uvx` command, no Docker required
 
 ---
 
@@ -102,27 +105,24 @@ This enables natural language field values (e.g., "High" instead of priority ID 
 
 ## Available Tools
 
-**15 consolidated action-based tools:**
+The dispatcher exposes **68 flat tools** — one per TestRail operation — grouped below by resource. Tool names are snake_case (e.g. `get_cases`, `add_case`, `update_run`, `upload_attachment`). The bun913 compatibility layer (`TESTRAIL_LEGACY_ALIASES=1`, default on) accepts the camelCase aliases used by the bun913 fork (`getCases`, `addCase`, …) and resolves them to the canonical names.
 
-| Tool | Actions | Description |
-|------|---------|-------------|
-| `testrail_projects` | list, get | Project discovery and details |
-| `testrail_suites` | list, get, add, update, delete | Test suite management |
-| `testrail_sections` | list, get, add, update, delete, move | Section/folder organization |
-| `testrail_cases` | list, get, get_by_ids, add, update, delete, history, bulk_update, bulk_delete, copy_to_section, move_to_section | Test case management (11 actions) |
-| `testrail_tests` | list, get | Test instances in runs |
-| `testrail_runs` | list, get, add, update, close, delete | Test run management |
-| `testrail_plans` | list, get, add, update, close, delete | Test plan management |
-| `testrail_plan_entries` | add, update, delete | Plan entry management |
-| `testrail_results` | get_for_test, get_for_case, get_for_run, add_for_test, add_for_case, bulk_add_for_tests, bulk_add_for_cases | Result submission and querying |
-| `testrail_milestones` | list, get, add, update, delete | Milestone management |
-| `testrail_users` | list, get, get_by_email | User lookup |
-| `testrail_configs` | list_groups, add_group, add_config | Multi-platform configs |
-| `testrail_metadata` | case_fields, case_types, priorities, statuses, templates | Reference data discovery |
-| `testrail_attachments` | upload, list, get, delete | File/image attachments |
-| `testrail_health` | *(standalone)* | Server health monitoring |
-
-Each tool uses an `action` parameter to select the operation.
+| Resource | Read | Write |
+|---|---|---|
+| Projects | `get_projects`, `get_project` | — |
+| Suites | `get_suites`, `get_suite` | `add_suite`, `update_suite`, `delete_suite` |
+| Sections | `get_sections`, `get_section` | `add_section`, `update_section`, `move_section`, `delete_section` |
+| Cases | `get_cases`, `get_case`, `get_cases_by_ids`, `get_case_history` | `add_case`, `update_case`, `update_cases`, `delete_case`, `delete_cases`, `copy_cases_to_section`, `move_cases_to_section` |
+| Tests | `get_tests`, `get_test` | — |
+| Runs | `get_runs`, `get_run` | `add_run`, `update_run`, `close_run`, `delete_run` |
+| Plans | `get_plans`, `get_plan` | `add_plan`, `update_plan`, `close_plan`, `delete_plan`, `add_plan_entry`, `update_plan_entry`, `delete_plan_entry` |
+| Results | `get_results`, `get_results_for_case`, `get_results_for_run` | `add_result`, `add_results`, `add_result_for_case`, `add_results_for_cases` |
+| Milestones | `get_milestones`, `get_milestone` | `add_milestone`, `update_milestone`, `delete_milestone` |
+| Users | `get_users`, `get_user`, `get_user_by_email` | — |
+| Configs | `get_configs` | `add_config_group`, `add_config` |
+| Metadata | `get_case_fields`, `get_case_types`, `get_priorities`, `get_statuses`, `get_templates` | — |
+| Attachments | `list_attachments`, `get_attachment` | `upload_attachment`, `delete_attachment` |
+| Health | `get_server_health` | — |
 
 ---
 
@@ -180,7 +180,7 @@ AI: Queries results, formats as a readable table.
          │ MCP Protocol (stdio JSON-RPC)
 ┌────────▼─────────┐
 │   MCP Server     │  (This project — runs via uvx)
-│   15 Tools       │
+│   68 flat tools  │
 └────────┬─────────┘
          │ HTTPS + Basic Auth
 ┌────────▼─────────┐
@@ -188,10 +188,9 @@ AI: Queries results, formats as a readable table.
 └──────────────────┘
 ```
 
-**Three-layer design:**
-- **Client Layer** (`src/client/api/`) — HTTP client with auth, rate limiting, retry, file upload
-- **Server Layer** (`src/server/api/`) — MCP tool handlers, caches, rate limiter
-- **Shared Layer** (`src/shared/schemas/`) — Pydantic validation models
+**Two-package layout** (uv workspace; ADR-003):
+- **`testrail-core`** (`packages/testrail-core/`) — protocol-agnostic integration library: HTTP client, retry, rate-limit, four metadata caches, Pydantic schemas, exceptions, attachment handling. Importable directly by any Python consumer.
+- **`testrail-mcp`** (this top-level package) — thin MCP wrapper: stdio entry point, 68-tool dispatcher, server-side gates (read-only, allowlist, aliases, preload), per-resource handlers that adapt MCP tool calls to `testrail-core`.
 
 **Four independent caches** (24h TTL, in-memory):
 - Field Cache — custom field name→ID mappings
@@ -214,11 +213,26 @@ AI: Queries results, formats as a readable table.
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `TESTRAIL_URL` | Yes | Your TestRail instance URL (e.g., `https://your-instance.testrail.io`) |
-| `TESTRAIL_USERNAME` | Yes | Your TestRail login email |
-| `TESTRAIL_API_KEY` | Yes | API key from TestRail My Settings |
+### Required
+
+| Variable | Description |
+|----------|-------------|
+| `TESTRAIL_URL` | Your TestRail instance URL (e.g., `https://your-instance.testrail.io`) |
+| `TESTRAIL_USERNAME` | Your TestRail login email |
+| `TESTRAIL_API_KEY` | API key from TestRail My Settings |
+
+### Optional — server-side gates
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TESTRAIL_READ_ONLY` | `0` | When truthy (`1`, `true`, `yes`, `on`), every write tool is blocked at the dispatcher and returns an error to the AI client. Read tools are unaffected. Use to embed the server in environments that must not mutate TestRail data. |
+| `TESTRAIL_ALLOWED_TOOLS` | *(unset = all)* | Comma-separated allowlist of tool names. When set, any tool not in the list is rejected at the dispatcher. Combine with `TESTRAIL_READ_ONLY=1` to further narrow read access. |
+| `TESTRAIL_LEGACY_ALIASES` | `1` | When on, accepts the 28 camelCase tool names from the bun913 fork (`getCases`, `addCase`, …) and resolves them to canonical snake_case names. Set to `0` once your client has migrated. |
+| `TESTRAIL_PRELOAD_CACHE` | `0` | When truthy, eagerly fetches `case_fields`, `statuses`, `priorities`, and `case_types` at startup so the first tool call doesn't pay the cold-cache penalty. Failures during preload are non-fatal. |
+
+### bun913 migration
+
+If you're migrating from the bun913 fork, leave `TESTRAIL_LEGACY_ALIASES` at its default (`1`) — your existing camelCase tool names continue to work. Once your client is fully migrated to canonical snake_case names, set it to `0` to disable the alias resolver and reject the legacy names.
 
 ---
 
