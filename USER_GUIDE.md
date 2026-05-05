@@ -9,6 +9,9 @@
 - [Step 2: Configure Your AI Client](#step-2-configure-your-ai-client)
 - [Step 3: Test the Connection](#step-3-test-the-connection)
 - [Step 4: Populate the Cache](#step-4-populate-the-cache)
+- [Read-Only Mode](#read-only-mode)
+- [Restricting the Tool Surface](#restricting-the-tool-surface)
+- [bun913 Migration](#bun913-migration)
 - [Common Workflows](#common-workflows)
 - [Working with Attachments](#working-with-attachments)
 - [Filtering and Pagination](#filtering-and-pagination)
@@ -22,9 +25,10 @@
 This guide walks you through:
 1. Setting up the TestRail MCP Server
 2. Configuring it with Claude Code, Claude Desktop, VS Code, or Cursor
-3. Using the 15 consolidated tools effectively
-4. Uploading attachments and embedding images
-5. Troubleshooting common issues
+3. Using the 68 flat MCP tools effectively
+4. Read-only mode and tool-allowlist gating
+5. Uploading attachments and embedding images
+6. Troubleshooting common issues
 
 **Time Required:** 5 minutes
 
@@ -195,6 +199,68 @@ This maps status names to IDs (e.g., "Passed" → ID 1, "Failed" → ID 5).
 
 **Now you're ready!** You can use natural language field names in all commands.
 
+> **Tip:** Set `TESTRAIL_PRELOAD_CACHE=1` in your MCP env block to skip Step 4 — the server will warm all four caches at startup. Failures are non-fatal; the caches still populate lazily on first use if preload couldn't reach TestRail.
+
+---
+
+## Read-Only Mode
+
+Set `TESTRAIL_READ_ONLY=1` in your MCP env block to embed the server in environments that must not mutate TestRail data — production AI assistants, demos, shared sessions, untrusted prompts.
+
+**What it does:** every write tool (the canonical 36-tool write set: `add_*`, `update_*`, `delete_*`, `close_*`, `copy_*`, `move_*`, `upload_attachment`) is blocked at the dispatcher and returns an error to the AI client. Read tools are unaffected.
+
+```json
+{
+  "mcpServers": {
+    "testrail-readonly": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/<your-org>/<your-repo>.git", "testrail-mcp"],
+      "env": {
+        "TESTRAIL_URL": "https://your-instance.testrail.io",
+        "TESTRAIL_USERNAME": "your-email@company.com",
+        "TESTRAIL_API_KEY": "your-api-key",
+        "TESTRAIL_READ_ONLY": "1"
+      }
+    }
+  }
+}
+```
+
+**Recognized truthy values:** `1`, `true`, `yes`, `on` (case-insensitive). Anything else (including unset, empty, `0`, `false`) leaves write tools enabled and logs a warning if the value was unrecognized — that's deliberate so a typo like `treu` cannot silently disable the gate.
+
+---
+
+## Restricting the Tool Surface
+
+Set `TESTRAIL_ALLOWED_TOOLS` to a comma-separated list of tool names to make the dispatcher reject every tool that isn't on the list. Useful when you want to expose a narrow, well-understood subset to an AI client.
+
+```json
+"env": {
+  "TESTRAIL_URL": "...",
+  "TESTRAIL_USERNAME": "...",
+  "TESTRAIL_API_KEY": "...",
+  "TESTRAIL_ALLOWED_TOOLS": "get_projects,get_suites,get_sections,get_cases,get_case,get_runs,get_results_for_run"
+}
+```
+
+**Combines with `TESTRAIL_READ_ONLY`:**
+- `TESTRAIL_READ_ONLY=1` blocks every write tool, regardless of the allowlist.
+- `TESTRAIL_ALLOWED_TOOLS=...` blocks every tool not on the list, regardless of read/write.
+- Both together: the tool must pass *both* gates.
+
+**Tool names** are the canonical snake_case names listed in [README.md → Available Tools](README.md#available-tools). Aliases (camelCase) are resolved before the allowlist check, so `getCases` works in the allowlist if the bun913 layer is on.
+
+---
+
+## bun913 Migration
+
+If you're switching from the bun913 fork, the server accepts the 28 camelCase tool names from that fork by default and resolves them to canonical snake_case names. No client-side changes are needed — your existing prompts continue to work.
+
+`TESTRAIL_LEGACY_ALIASES=1` (default) → camelCase aliases enabled.
+`TESTRAIL_LEGACY_ALIASES=0` → only canonical snake_case names accepted; legacy aliases return a "tool not found" error.
+
+Migrate your client to canonical names at your own pace, then flip the flag to `0` to remove ambiguity.
+
 ---
 
 ## Common Workflows
@@ -271,7 +337,7 @@ Upload images, documents, or other files to TestRail entities:
 "Upload /path/to/screenshot.png to test case 12345"
 ```
 
-The AI uses `testrail_attachments` with action `upload`, which returns an `attachment_id`.
+The AI calls `upload_attachment`, which returns an `attachment_id`.
 
 **Supported file types:** images (.png, .jpg, .gif, .webp), documents (.pdf, .doc, .xlsx), text (.txt, .csv, .json, .xml), archives (.zip, .tar, .gz), video (.mp4, .mov).
 
@@ -394,7 +460,7 @@ Then check which fields are required (marked in the response).
 
 ### Custom field values not recognized
 
-1. Run `testrail_metadata` (action: `case_fields`) to see valid values
+1. Call `get_case_fields` to see valid values
 2. Check spelling — matching is case-insensitive
 3. Use numeric IDs as fallback
 
@@ -417,7 +483,7 @@ You're using markdown syntax. TestRail uses HTML:
 ## FAQ
 
 ### Q: Do I need to warm caches every time?
-**A:** Only after the MCP server restarts (reconnects). Caches persist for 24 hours in-memory. Run `testrail_metadata` (actions: `case_fields`, `statuses`) after each restart.
+**A:** Only after the MCP server restarts (reconnects). Caches persist for 24 hours in-memory. Call `get_case_fields` and `get_statuses` after each restart, or set `TESTRAIL_PRELOAD_CACHE=1` to warm them automatically at startup.
 
 ### Q: Can I use this with multiple TestRail projects?
 **A:** Yes. All projects accessible to your API key are available through the same server.
