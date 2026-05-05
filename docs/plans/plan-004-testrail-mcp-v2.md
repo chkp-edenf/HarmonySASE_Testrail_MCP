@@ -363,7 +363,7 @@ Each PR (5.2–5.11):
 **Depends on Phase 5 fully merged.**
 
 - [x] 6.1 (testrail-core only): Bump both `packages/*/pyproject.toml` versions to `2.0.0` (S).
-- [ ] 6.2: `testrail-mcp` declares `testrail-core==2.0.0` as a dependency (S).
+- [x] 6.2 (root renamed to testrail-mcp; testrail-core==2.0.0 pinned via workspace override): `testrail-mcp` declares `testrail-core==2.0.0` as a dependency (S).
   - Verify: `uv lock` produces a clean lockfile with both at 2.0.0.
 - [ ] 6.3: Add `.github/workflows/publish.yml` (M).
   - Trigger: `push` on tag matching `v*.*.*`.
