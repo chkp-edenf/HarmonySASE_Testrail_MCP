@@ -54,20 +54,29 @@ PyPI, replace the `git+` URL pin with `uvx testrail-mcp`.
 so your existing camelCase tool names continue to resolve. Migrate to the
 canonical snake_case names at your own pace, then flip the flag to `0`.
 
+## Packaging layout
+
+- `testrail-mcp` (root `pyproject.toml`) — MCP wrapper. Stdio entry,
+  68-tool dispatcher, server-side gates (read-only, allowlist, aliases,
+  preload), per-resource handlers, health, metrics, wizard installer.
+  Ships from `src/`.
+- `testrail-core` (`packages/testrail-core/pyproject.toml`) — importable
+  library. HTTP client, retry, rate-limit, four metadata caches,
+  Pydantic schemas, exception hierarchy, attachment handling,
+  `TestRailClient` aggregator. No MCP dependency. Ships from
+  `packages/testrail-core/src/testrail_core/`.
+
+`testrail-mcp` declares `testrail-core==2.0.0` as a runtime dep; the
+workspace `tool.uv.sources` overrides this for local development so
+both move together without a PyPI round-trip.
+
 ## Known gaps
 
-- `packages/testrail-mcp/` ships as a skeleton; the MCP runtime still
-  ships from the root `testrail-mcp` package. Migrating the
-  MCP entry-point + dispatcher into the workspace package is deferred —
-  per ADR-003 the server-orchestration modules (health, metrics,
-  cache_preload, access_control, aliases, dispatcher, per-resource
-  handlers) belong in the MCP wrapper, but the wrapper currently lives
-  at repo root rather than under `packages/testrail-mcp/`.
 - The PyPI publish workflow (`.github/workflows/publish.yml`) is not
   included — org policy requires explicit owner authorship for CI/CD
   changes. To publish: configure OIDC trusted-publishing on PyPI for
-  `testrail-core` (and `testrail-mcp` once the runtime migrates), add
-  the workflow, then tag `v2.0.0`.
+  both `testrail-core` and `testrail-mcp`, add the workflow, then tag
+  `v2.0.0`.
 
 ## Acknowledgments
 
