@@ -1,29 +1,8 @@
-"""Common schemas and types shared across the TestRail MCP server"""
+"""Re-export shim — relocated to testrail_core.schemas.common (plan-004 phase 5)."""
+from testrail_core.schemas.common import (
+    ErrorResponse,
+    PaginatedResponse,
+    SuccessResponse,
+)
 
-from typing import Optional, Any, Dict, List
-from pydantic import BaseModel, Field
-from datetime import datetime
-
-
-class PaginatedResponse(BaseModel):
-    """Standard paginated response from TestRail API"""
-    offset: int = 0
-    limit: int = 250
-    size: int = 0
-    _links: Optional[Dict[str, Any]] = None
-
-
-class ErrorResponse(BaseModel):
-    """Standard error response"""
-    success: bool = False
-    message: str
-    error: Optional[str] = None
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
-
-
-class SuccessResponse(BaseModel):
-    """Standard success response"""
-    success: bool = True
-    message: str
-    data: Any
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+__all__ = ["ErrorResponse", "PaginatedResponse", "SuccessResponse"]

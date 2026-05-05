@@ -1,23 +1,10 @@
-"""Status-related schemas"""
+"""Re-export shim — relocated to testrail_core.schemas.statuses (plan-004 phase 5)."""
+from testrail_core.schemas.statuses import (
+    Status,
+    StatusesResponse
+)
 
-from typing import Optional, List
-from pydantic import BaseModel, Field
-
-
-class Status(BaseModel):
-    """TestRail Status schema"""
-    id: int
-    name: str
-    label: str
-    color_dark: Optional[str] = None
-    color_medium: Optional[str] = None
-    color_bright: Optional[str] = None
-    is_system: Optional[bool] = None
-    is_untested: Optional[bool] = None
-    is_final: Optional[bool] = None
-
-
-class StatusesResponse(BaseModel):
-    """Response for get_statuses endpoint"""
-    statuses: List[Status] = Field(default_factory=list)
-    count: int = 0
+__all__ = [
+    "Status",
+    "StatusesResponse"
+]
