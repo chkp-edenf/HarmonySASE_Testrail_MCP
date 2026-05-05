@@ -468,7 +468,7 @@ Then check which fields are required (marked in the response).
 
 The uvx cache needs clearing:
 ```bash
-uv cache clean harmonysase-testrail-mcp --force
+uv cache clean testrail-mcp --force
 ```
 Then restart the MCP connection in your AI client.
 
@@ -515,7 +515,7 @@ You're using markdown syntax. TestRail uses HTML:
 uvx --version
 
 # Clear cached server (after code changes)
-uv cache clean harmonysase-testrail-mcp --force
+uv cache clean testrail-mcp --force
 ```
 
 ---

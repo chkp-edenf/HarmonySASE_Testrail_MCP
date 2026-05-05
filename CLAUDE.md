@@ -39,7 +39,7 @@ TestRail MCP Server v2.0.0 - A Model Context Protocol server that connects AI as
 }
 
 # After code changes, clear uvx cache:
-uv cache clean harmonysase-testrail-mcp --force
+uv cache clean testrail-mcp --force
 # Then restart the MCP connection in your AI client
 ```
 
@@ -218,7 +218,7 @@ Example: `get_cases` with filters:
 1. Verify cache population: call `get_server_health`
 2. Warm caches: call `get_case_fields` then `get_statuses` (or set `TESTRAIL_PRELOAD_CACHE=1`)
 3. Clear caches: restart the MCP server connection
-4. Clear uvx cache after code changes: `uv cache clean harmonysase-testrail-mcp --force`
+4. Clear uvx cache after code changes: `uv cache clean testrail-mcp --force`
 
 ## Key Files Reference
 

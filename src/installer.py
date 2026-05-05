@@ -148,7 +148,7 @@ def _package_version() -> str:
     try:
         from importlib.metadata import version  # noqa: PLC0415
 
-        return version("harmonysase-testrail-mcp")
+        return version("testrail-mcp")
     except Exception:  # noqa: BLE001 — never fail startup for a banner
         return "dev"
 

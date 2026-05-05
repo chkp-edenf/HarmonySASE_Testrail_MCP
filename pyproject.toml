@@ -3,16 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "harmonysase-testrail-mcp"
+name = "testrail-mcp"
 version = "2.0.0"
-description = "MCP server connecting AI assistants to TestRail - 15 consolidated tools with attachment support"
+description = "MCP server connecting AI assistants to TestRail - 68 flat tools, server-side gates, bun913-compat aliases, attachment support"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "Eden Fridman" }]
-keywords = ["testrail", "mcp", "testing", "qa", "model-context-protocol", "check-point", "harmony-sase"]
+keywords = ["testrail", "mcp", "testing", "qa", "model-context-protocol"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Testing",
     "Programming Language :: Python :: 3.11",
@@ -21,9 +21,15 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=0.9.0",
-    "httpx>=0.27.0",
-    "pydantic>=2.0.0",
+    "testrail-core==2.0.0",
 ]
+
+# When building from the workspace, resolve the testrail-core dep from
+# the local package rather than PyPI. uv honours this for `uv sync`,
+# `uv run`, and editable installs; it has no effect on the published
+# wheel's metadata, so PyPI consumers still pull the real 2.0.0 release.
+[tool.uv.sources]
+testrail-core = { workspace = true }
 
 [project.optional-dependencies]
 dev = [
@@ -40,10 +46,11 @@ testrail-mcp-install = "src.installer:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
-# uv workspace declaration (plan-004 phase 5).
-# The root project keeps shipping `testrail-mcp` from `src/` until phase 5
-# finishes migrating code into the per-package layouts under `packages/`.
-# Members are pre-release skeletons (version 0.1.0-pre) for now.
+# uv workspace declaration. The root project ships `testrail-mcp` from
+# `src/` (the MCP runtime — stdio entry, dispatcher, gates, handlers,
+# server-side caches/preload/health/metrics; ADR-003 keeps these in the
+# wrapper). The workspace member `packages/testrail-core/` ships the
+# protocol-agnostic integration library and depends on nothing in src/.
 [tool.uv.workspace]
 members = ["packages/*"]
 

@@ -290,7 +290,7 @@ For local development, point uvx to the local repo:
 
 **After code changes:** clear the uvx cache and restart the MCP server:
 ```bash
-uv cache clean harmonysase-testrail-mcp --force
+uv cache clean testrail-mcp --force
 ```
 
 ---
@@ -313,7 +313,7 @@ Run `testrail_metadata` (action: `case_fields`) to populate the cache first.
 ### Changes to MCP server code not taking effect
 The uvx cache needs clearing:
 ```bash
-uv cache clean harmonysase-testrail-mcp --force
+uv cache clean testrail-mcp --force
 ```
 Then restart the MCP connection in your AI client.
 
