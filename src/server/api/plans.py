@@ -30,7 +30,7 @@ def format_plan(plan: dict) -> str:
 
 async def handle_get_plans(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get test plans for a project with filtering support"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -92,7 +92,7 @@ async def handle_get_plans(arguments: dict, client: TestRailClient) -> list[Text
 
 async def handle_get_plan(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific test plan"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])
@@ -126,13 +126,13 @@ async def handle_get_plan(arguments: dict, client: TestRailClient) -> list[TextC
 
 async def handle_add_plan(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new test plan"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
         
         # Required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}
@@ -168,7 +168,7 @@ async def handle_add_plan(arguments: dict, client: TestRailClient) -> list[TextC
 
 async def handle_update_plan(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing test plan"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])
@@ -211,7 +211,7 @@ async def handle_update_plan(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_close_plan(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Close a test plan"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])
@@ -233,7 +233,7 @@ async def handle_close_plan(arguments: dict, client: TestRailClient) -> list[Tex
 
 async def handle_delete_plan(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a test plan"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])
@@ -254,7 +254,7 @@ async def handle_delete_plan(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_add_plan_entry(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Add a test run/entry to an existing plan"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])
@@ -320,7 +320,7 @@ async def handle_add_plan_entry(arguments: dict, client: TestRailClient) -> list
 
 async def handle_update_plan_entry(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing plan entry"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])
@@ -367,7 +367,7 @@ async def handle_update_plan_entry(arguments: dict, client: TestRailClient) -> l
 
 async def handle_delete_plan_entry(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a plan entry"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         plan_id = int(arguments["plan_id"])

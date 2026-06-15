@@ -1,18 +1,17 @@
 """Schema definitions for user-related operations"""
 
-from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GetUsersInput(BaseModel):
     """Input for get_users tool - list all users"""
-    is_active: Optional[bool] = Field(
+    is_active: bool | None = Field(
         None,
         description="Filter by active status (true=active, false=inactive). Omit to get all users."
     )
-    project_id: Optional[str] = Field(None, description="✅ Filter by project ID - returns users assigned to the project (API-supported)")
-    name: Optional[str] = Field(None, description="🔧 Filter by user name (client-side)")
-    email: Optional[str] = Field(None, description="🔧 Filter by user email (client-side)")
+    project_id: str | None = Field(None, description="✅ Filter by project ID - returns users assigned to the project (API-supported)")
+    name: str | None = Field(None, description="🔧 Filter by user name (client-side)")
+    email: str | None = Field(None, description="🔧 Filter by user email (client-side)")
 
 
 class GetUserInput(BaseModel):
@@ -33,12 +32,11 @@ class GetUserByEmailInput(BaseModel):
 
 class UserOutput(BaseModel):
     """Output schema for user objects"""
+    model_config = ConfigDict(extra="allow")  # Allow additional fields from API
+
     id: int = Field(..., description="User ID")
     name: str = Field(..., description="Full name of the user")
     email: str = Field(..., description="Email address")
     is_active: bool = Field(..., description="Whether the user is active")
-    role_id: Optional[int] = Field(None, description="Role ID")
-    role: Optional[str] = Field(None, description="Role name")
-    
-    class Config:
-        extra = "allow"  # Allow additional fields from API
+    role_id: int | None = Field(None, description="Role ID")
+    role: str | None = Field(None, description="Role name")

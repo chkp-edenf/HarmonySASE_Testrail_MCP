@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TestRail MCP Server v2.2.0 - A Model Context Protocol server that connects AI assistants to TestRail instances. The dispatcher exposes **75 flat MCP tools** (one per TestRail v2 endpoint).
+TestRail MCP Server v2.2.1 - A Model Context Protocol server that connects AI assistants to TestRail instances. The dispatcher exposes **75 flat MCP tools** (one per TestRail v2 endpoint).
 
 **Key Capabilities:**
 - 75 flat MCP tools spanning every TestRail v2 endpoint

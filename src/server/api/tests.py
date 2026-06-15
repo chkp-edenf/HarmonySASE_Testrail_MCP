@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_get_tests(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get tests for a test run with filtering support"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -69,7 +69,7 @@ async def handle_get_tests(arguments: dict, client: TestRailClient) -> list[Text
     
 async def handle_get_test(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific test"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         test_id = int(arguments["test_id"])

@@ -12,6 +12,21 @@ def require_fields(arguments: Dict[str, Any], fields: list, action: str) -> None
         raise ValueError(f"Missing required field(s) for {action}: {', '.join(missing)}")
 
 
+def coerce_bool(value: Any) -> bool:
+    """Coerce a flag value to bool, accepting JSON booleans, ints, and strings.
+
+    MCP tool schemas declare boolean-ish flags as ``string`` for portability,
+    but a client may still send a real JSON ``true``/``false`` or ``0``/``1``.
+    Calling ``.lower()`` on those raised ``AttributeError``; this normalizes
+    all three forms. Truthy strings: ``true``/``1``/``yes``/``on`` (case-insensitive).
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return bool(value)
+    return str(value).strip().lower() in ("true", "1", "yes", "on")
+
+
 def create_success_response(message: str, data: Any) -> Dict[str, Any]:
     """Create standardized success response
     

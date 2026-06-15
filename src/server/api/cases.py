@@ -190,7 +190,7 @@ async def _validate_required_fields(client: TestRailClient, data: dict) -> list:
 
 async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get test cases for a project/suite with optional advanced filtering"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -264,7 +264,7 @@ async def handle_get_cases(arguments: dict, client: TestRailClient) -> list[Text
     
 async def handle_get_cases_by_ids(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Fetch multiple specific test cases by a list of case IDs (batch operation)"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Parse comma-separated case IDs
@@ -321,7 +321,7 @@ async def handle_get_cases_by_ids(arguments: dict, client: TestRailClient) -> li
     
 async def handle_get_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get complete details of a specific test case"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         case_id = int(arguments["case_id"])
@@ -342,7 +342,7 @@ async def handle_get_case(arguments: dict, client: TestRailClient) -> list[TextC
     
 async def handle_add_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new test case in a section"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     # Parse custom_fields JSON if provided
     if arguments.get("custom_fields"):
@@ -468,7 +468,7 @@ async def handle_add_case(arguments: dict, client: TestRailClient) -> list[TextC
 
 async def handle_update_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing test case"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     # Parse custom_fields JSON if provided
     if arguments.get("custom_fields"):
@@ -567,7 +567,7 @@ async def handle_update_case(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_delete_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a test case (soft delete)"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         case_id = int(arguments["case_id"])
@@ -588,7 +588,7 @@ async def handle_delete_case(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_get_case_history(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get the change history for a test case"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         case_id = int(arguments["case_id"])
@@ -627,7 +627,7 @@ async def handle_get_case_history(arguments: dict, client: TestRailClient) -> li
 
 async def handle_copy_cases_to_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Copy test cases to a different section"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         section_id = int(arguments["section_id"])
@@ -656,7 +656,7 @@ async def handle_copy_cases_to_section(arguments: dict, client: TestRailClient) 
 
 async def handle_move_cases_to_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Move test cases to a different section"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         section_id = int(arguments["section_id"])
@@ -685,7 +685,7 @@ async def handle_move_cases_to_section(arguments: dict, client: TestRailClient) 
 
 async def handle_update_cases(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Bulk update test cases"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     # Parse custom_fields JSON if provided
     if arguments.get("custom_fields"):
@@ -778,7 +778,7 @@ async def handle_update_cases(arguments: dict, client: TestRailClient) -> list[T
 
 async def handle_delete_cases(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Bulk delete test cases (soft delete)"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         suite_id = int(arguments["suite_id"])

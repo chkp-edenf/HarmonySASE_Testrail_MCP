@@ -1,6 +1,5 @@
 """Suite-related schemas"""
 
-from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -8,12 +7,12 @@ class Suite(BaseModel):
     """TestRail Suite schema"""
     id: int
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     project_id: int
-    is_master: Optional[bool] = None
-    is_baseline: Optional[bool] = None
-    is_completed: Optional[bool] = None
-    completed_on: Optional[int] = None
+    is_master: bool | None = None
+    is_baseline: bool | None = None
+    is_completed: bool | None = None
+    completed_on: int | None = None
     url: str
 
 

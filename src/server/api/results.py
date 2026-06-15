@@ -41,7 +41,7 @@ def format_result(result: dict) -> str:
 
 async def handle_get_results(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get results for a test with optional advanced filtering"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -99,7 +99,7 @@ async def handle_get_results(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_get_results_for_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get results for a case in a run with optional advanced filtering"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -159,7 +159,7 @@ async def handle_get_results_for_case(arguments: dict, client: TestRailClient) -
 
 async def handle_get_results_for_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get all results for a run with optional advanced filtering"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -219,7 +219,7 @@ async def handle_get_results_for_run(arguments: dict, client: TestRailClient) ->
 
 async def handle_add_result(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Add a result for a test"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Ensure status cache is populated
@@ -276,7 +276,7 @@ async def handle_add_result(arguments: dict, client: TestRailClient) -> list[Tex
 
 async def handle_add_results(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Add results for multiple tests in a run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Ensure status cache is populated
@@ -318,7 +318,7 @@ async def handle_add_results(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_add_result_for_case(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Add a result for a case in a run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -375,7 +375,7 @@ async def handle_add_result_for_case(arguments: dict, client: TestRailClient) ->
 
 async def handle_add_results_for_cases(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Add results for multiple cases in a run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input

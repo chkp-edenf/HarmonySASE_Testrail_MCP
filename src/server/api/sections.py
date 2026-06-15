@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_get_sections(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get all sections for a project/suite"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -64,7 +64,7 @@ async def handle_get_sections(arguments: dict, client: TestRailClient) -> list[T
 
 async def handle_get_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific section"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         section_id = int(arguments["section_id"])
@@ -86,13 +86,13 @@ async def handle_get_section(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_add_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new section"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
         
         # Validate required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}
@@ -123,7 +123,7 @@ async def handle_add_section(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_update_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing section"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         section_id = int(arguments["section_id"])
@@ -157,7 +157,7 @@ async def handle_update_section(arguments: dict, client: TestRailClient) -> list
 
 async def handle_delete_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a section (soft delete)"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         section_id = int(arguments["section_id"])
@@ -178,7 +178,7 @@ async def handle_delete_section(arguments: dict, client: TestRailClient) -> list
 
 async def handle_move_section(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Move section to different parent or change display order"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         section_id = int(arguments["section_id"])
