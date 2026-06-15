@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_get_projects(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get all TestRail projects"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -58,7 +58,7 @@ async def handle_get_projects(arguments: dict, client: TestRailClient) -> list[T
 
 async def handle_get_project(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get a specific project by ID"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])

@@ -5,7 +5,7 @@ import logging
 from mcp.types import TextContent
 from ...client.api import TestRailClient
 from ...shared.schemas.runs import GetRunsInput
-from .utils import create_success_response, create_error_response, truncate_output
+from .utils import create_success_response, create_error_response, truncate_output, coerce_bool
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def format_run(run: dict) -> str:
 
 async def handle_get_runs(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get test runs for a project with optional advanced filtering"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -41,7 +41,7 @@ async def handle_get_runs(arguments: dict, client: TestRailClient) -> list[TextC
         milestone_id = input_data.milestone_id
         is_completed = None
         if input_data.is_completed is not None:
-            is_completed = input_data.is_completed.lower() == "true"
+            is_completed = coerce_bool(input_data.is_completed)
         suite_id = int(input_data.suite_id) if input_data.suite_id else None
         offset = int(input_data.offset) if input_data.offset else None
         refs_filter = input_data.refs_filter
@@ -90,7 +90,7 @@ async def handle_get_runs(arguments: dict, client: TestRailClient) -> list[TextC
 
 async def handle_get_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific test run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         run_id = int(arguments["run_id"])
@@ -112,13 +112,13 @@ async def handle_get_run(arguments: dict, client: TestRailClient) -> list[TextCo
 
 async def handle_add_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new test run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
         
         # Required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}
@@ -133,7 +133,7 @@ async def handle_add_run(arguments: dict, client: TestRailClient) -> list[TextCo
         if arguments.get("assignedto_id"):
             data["assignedto_id"] = int(arguments["assignedto_id"])
         if arguments.get("include_all") is not None:
-            data["include_all"] = arguments["include_all"].lower() == "true"
+            data["include_all"] = coerce_bool(arguments["include_all"])
         if arguments.get("case_ids"):
             data["case_ids"] = [int(cid.strip()) for cid in arguments["case_ids"].split(",")]
         if arguments.get("refs"):
@@ -161,7 +161,7 @@ async def handle_add_run(arguments: dict, client: TestRailClient) -> list[TextCo
 
 async def handle_update_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing test run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         run_id = int(arguments["run_id"])
@@ -175,7 +175,7 @@ async def handle_update_run(arguments: dict, client: TestRailClient) -> list[Tex
         if arguments.get("milestone_id"):
             data["milestone_id"] = int(arguments["milestone_id"])
         if arguments.get("include_all") is not None:
-            data["include_all"] = arguments["include_all"].lower() == "true"
+            data["include_all"] = coerce_bool(arguments["include_all"])
         if arguments.get("case_ids"):
             data["case_ids"] = [int(cid.strip()) for cid in arguments["case_ids"].split(",")]
         if arguments.get("refs"):
@@ -207,7 +207,7 @@ async def handle_update_run(arguments: dict, client: TestRailClient) -> list[Tex
 
 async def handle_close_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Close a test run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         run_id = int(arguments["run_id"])
@@ -229,7 +229,7 @@ async def handle_close_run(arguments: dict, client: TestRailClient) -> list[Text
 
 async def handle_delete_run(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a test run"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         run_id = int(arguments["run_id"])

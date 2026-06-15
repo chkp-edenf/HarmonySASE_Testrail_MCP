@@ -50,7 +50,7 @@ def format_shared_step(step: dict) -> str:
 
 async def handle_get_shared_steps(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get shared steps for a project with filtering support"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
 
     try:
         input_data = GetSharedStepsInput(**arguments)
@@ -105,7 +105,7 @@ async def handle_get_shared_steps(arguments: dict, client: TestRailClient) -> li
 
 async def handle_get_shared_step(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific set of shared steps"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
 
     try:
         shared_step_id = int(arguments["shared_step_id"])
@@ -127,7 +127,7 @@ async def handle_get_shared_step(arguments: dict, client: TestRailClient) -> lis
 
 async def handle_get_shared_step_history(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get the change history of a set of shared steps (TestRail 7.3+)"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
 
     try:
         shared_step_id = int(arguments["shared_step_id"])
@@ -149,12 +149,12 @@ async def handle_get_shared_step_history(arguments: dict, client: TestRailClient
 
 async def handle_add_shared_step(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new set of shared steps"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
 
     try:
         project_id = int(arguments["project_id"])
 
-        if not arguments.get("title"):
+        if not str(arguments.get("title") or "").strip():
             raise ValueError("Missing required field: title")
 
         data: dict = {"title": arguments["title"]}
@@ -182,7 +182,7 @@ async def handle_update_shared_step(arguments: dict, client: TestRailClient) -> 
 
     Submitting custom_steps_separated REPLACES all existing steps.
     """
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
 
     try:
         shared_step_id = int(arguments["shared_step_id"])
@@ -217,7 +217,7 @@ async def handle_update_shared_step(arguments: dict, client: TestRailClient) -> 
 
 async def handle_delete_shared_step(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a set of shared steps. Cannot be undone."""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
 
     try:
         shared_step_id = int(arguments["shared_step_id"])

@@ -6,7 +6,7 @@ from datetime import datetime
 from mcp.types import TextContent
 from ...client.api import TestRailClient
 from ...shared.schemas.milestones import GetMilestonesInput
-from .utils import create_success_response, create_error_response, truncate_output
+from .utils import create_success_response, create_error_response, truncate_output, coerce_bool
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def format_milestone(milestone: dict) -> str:
 
 async def handle_get_milestones(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get milestones for a project with filtering support"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -67,11 +67,11 @@ async def handle_get_milestones(arguments: dict, client: TestRailClient) -> list
         # Extract explicit filter parameters (convert to boolean)
         is_completed = None
         if input_data.is_completed is not None:
-            is_completed = input_data.is_completed.lower() in ("true", "1")
-        
+            is_completed = coerce_bool(input_data.is_completed)
+
         is_started = None
         if input_data.is_started is not None:
-            is_started = input_data.is_started.lower() in ("true", "1")
+            is_started = coerce_bool(input_data.is_started)
         
         name = input_data.name
         limit = int(input_data.limit) if input_data.limit else None
@@ -117,7 +117,7 @@ async def handle_get_milestones(arguments: dict, client: TestRailClient) -> list
 
 async def handle_get_milestone(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific milestone"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         milestone_id = int(arguments["milestone_id"])
@@ -145,13 +145,13 @@ async def handle_get_milestone(arguments: dict, client: TestRailClient) -> list[
 
 async def handle_add_milestone(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new milestone"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
         
         # Required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}
@@ -184,7 +184,7 @@ async def handle_add_milestone(arguments: dict, client: TestRailClient) -> list[
 
 async def handle_update_milestone(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing milestone"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         milestone_id = int(arguments["milestone_id"])
@@ -202,9 +202,9 @@ async def handle_update_milestone(arguments: dict, client: TestRailClient) -> li
         if arguments.get("parent_id"):
             data["parent_id"] = int(arguments["parent_id"])
         if arguments.get("is_completed") is not None:
-            data["is_completed"] = arguments["is_completed"].lower() == "true"
+            data["is_completed"] = coerce_bool(arguments["is_completed"])
         if arguments.get("is_started") is not None:
-            data["is_started"] = arguments["is_started"].lower() == "true"
+            data["is_started"] = coerce_bool(arguments["is_started"])
         
         if not data:
             response = create_error_response("No update fields provided", Exception("No fields specified"))
@@ -228,7 +228,7 @@ async def handle_update_milestone(arguments: dict, client: TestRailClient) -> li
 
 async def handle_delete_milestone(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a milestone"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         milestone_id = int(arguments["milestone_id"])

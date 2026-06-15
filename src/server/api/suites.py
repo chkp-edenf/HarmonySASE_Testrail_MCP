@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_get_suites(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get all test suites for a project"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
@@ -46,7 +46,7 @@ async def handle_get_suites(arguments: dict, client: TestRailClient) -> list[Tex
 
 async def handle_get_suite(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get details of a specific test suite"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         suite_id = int(arguments["suite_id"])
@@ -68,13 +68,13 @@ async def handle_get_suite(arguments: dict, client: TestRailClient) -> list[Text
 
 async def handle_add_suite(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new test suite"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
         
         # Validate required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}
@@ -101,7 +101,7 @@ async def handle_add_suite(arguments: dict, client: TestRailClient) -> list[Text
 
 async def handle_update_suite(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Update an existing test suite"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         suite_id = int(arguments["suite_id"])
@@ -135,7 +135,7 @@ async def handle_update_suite(arguments: dict, client: TestRailClient) -> list[T
 
 async def handle_delete_suite(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Delete a test suite (soft delete)"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         suite_id = int(arguments["suite_id"])

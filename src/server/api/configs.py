@@ -38,7 +38,7 @@ def format_config_group(group: dict) -> str:
 
 async def handle_get_configs(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get all configuration groups for a project"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
@@ -77,13 +77,13 @@ async def handle_get_configs(arguments: dict, client: TestRailClient) -> list[Te
 
 async def handle_add_config_group(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Create a new configuration group"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         project_id = int(arguments["project_id"])
         
         # Validate required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}
@@ -106,13 +106,13 @@ async def handle_add_config_group(arguments: dict, client: TestRailClient) -> li
 
 async def handle_add_config(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Add a configuration to a group"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         config_group_id = int(arguments["config_group_id"])
         
         # Validate required fields
-        if not arguments.get("name"):
+        if not str(arguments.get("name") or "").strip():
             raise ValueError("Missing required field: name")
         
         data = {"name": arguments["name"]}

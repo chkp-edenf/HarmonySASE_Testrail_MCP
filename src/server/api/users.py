@@ -25,7 +25,7 @@ def format_user(user: dict) -> str:
 
 async def handle_get_users(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get all users in TestRail instance with filtering support"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         # Validate and parse input
@@ -72,7 +72,7 @@ async def handle_get_users(arguments: dict, client: TestRailClient) -> list[Text
 
 async def handle_get_user(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Get specific user by ID"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         user_id = int(arguments["user_id"])
@@ -94,7 +94,7 @@ async def handle_get_user(arguments: dict, client: TestRailClient) -> list[TextC
 
 async def handle_get_user_by_email(arguments: dict, client: TestRailClient) -> list[TextContent]:
     """Lookup user by email address"""
-    logger.info(f"Arguments: {json.dumps(arguments, indent=2)}")
+    logger.info(f"Tool args (keys only): {sorted(arguments.keys())}")
     
     try:
         email = arguments["email"]
