@@ -2,7 +2,7 @@
 
 **Connect AI assistants to your TestRail instance via the Model Context Protocol**
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)]()
 [![MCP Protocol](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)]()
 
@@ -238,8 +238,8 @@ Pick whichever form fits your workflow. All four launch the same server.
 | Source | Command | Pinning |
 |---|---|---|
 | **PyPI (latest)** | `uvx testrail-mcp` | tracks the newest published v2.x |
-| **PyPI (pinned)** | `uvx testrail-mcp==2.2.0` | exact version |
-| **Git (release tag)** | `uvx --from git+https://github.com/chkp-edenf/Testrail_MCP@v2.2.0 testrail-mcp` | exact tag, no PyPI required |
+| **PyPI (pinned)** | `uvx testrail-mcp==2.2.1` | exact version |
+| **Git (release tag)** | `uvx --from git+https://github.com/chkp-edenf/Testrail_MCP@v2.2.1 testrail-mcp` | exact tag, no PyPI required |
 | **Git (pinned SHA)** | `uvx --from git+https://github.com/chkp-edenf/Testrail_MCP@<sha> testrail-mcp` | exact commit, audit-friendly |
 | **Local source** | `uvx --from /path/to/local/repo testrail-mcp` | live dev |
 
@@ -259,7 +259,7 @@ client = TestRailClient(config, rate_limiter=rate_limiter)
 projects = await client.projects.get_projects()
 ```
 
-> The PyPI install paths require v2.2.0 to be tagged and the publish workflow to run. Until then, use the `git+` forms above.
+> The PyPI install paths require v2.2.1 to be tagged and the publish workflow to run. Until then, use the `git+` forms above.
 
 ---
 

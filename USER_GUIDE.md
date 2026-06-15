@@ -1,6 +1,6 @@
 # TestRail MCP Server - User Guide
 
-**Version 2.2.0 - Setup and Usage Instructions**
+**Version 2.2.1 - Setup and Usage Instructions**
 
 ## Table of Contents
 - [What You'll Learn](#what-youll-learn)
