@@ -1,6 +1,5 @@
 """Status-related schemas"""
 
-from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -9,15 +8,15 @@ class Status(BaseModel):
     id: int
     name: str
     label: str
-    color_dark: Optional[str] = None
-    color_medium: Optional[str] = None
-    color_bright: Optional[str] = None
-    is_system: Optional[bool] = None
-    is_untested: Optional[bool] = None
-    is_final: Optional[bool] = None
+    color_dark: str | None = None
+    color_medium: str | None = None
+    color_bright: str | None = None
+    is_system: bool | None = None
+    is_untested: bool | None = None
+    is_final: bool | None = None
 
 
 class StatusesResponse(BaseModel):
     """Response for get_statuses endpoint"""
-    statuses: List[Status] = Field(default_factory=list)
+    statuses: list[Status] = Field(default_factory=list)
     count: int = 0

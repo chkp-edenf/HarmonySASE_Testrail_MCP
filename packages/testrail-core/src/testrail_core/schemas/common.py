@@ -1,6 +1,6 @@
 """Common schemas and types shared across the TestRail MCP server"""
 
-from typing import Optional, Any, Dict, List
+from typing import Any
 from pydantic import BaseModel, Field
 from datetime import datetime
 
@@ -10,14 +10,14 @@ class PaginatedResponse(BaseModel):
     offset: int = 0
     limit: int = 250
     size: int = 0
-    _links: Optional[Dict[str, Any]] = None
+    _links: dict[str, Any] | None = None
 
 
 class ErrorResponse(BaseModel):
     """Standard error response"""
     success: bool = False
     message: str
-    error: Optional[str] = None
+    error: str | None = None
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
 
 

@@ -1,6 +1,5 @@
 """Pydantic schemas for attachment operations"""
 
-from typing import Optional
 from pydantic import BaseModel
 
 
@@ -9,7 +8,7 @@ class UploadAttachmentInput(BaseModel):
     entity_type: str
     entity_id: str
     file_path: str
-    filename: Optional[str] = None
+    filename: str | None = None
 
 
 class ListAttachmentsInput(BaseModel):

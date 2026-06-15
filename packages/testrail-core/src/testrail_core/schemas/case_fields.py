@@ -1,14 +1,14 @@
 """Case field-related schemas"""
 
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Any
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CaseFieldConfig(BaseModel):
     """Case field configuration"""
-    context: Optional[Dict[str, Any]] = None
-    options: Optional[Dict[str, Any]] = None
-    id: Optional[str] = None
+    context: dict[str, Any] | None = None
+    options: dict[str, Any] | None = None
+    id: str | None = None
 
 
 class CaseField(BaseModel):
@@ -16,24 +16,24 @@ class CaseField(BaseModel):
     id: int
     name: str
     system_name: str
-    label: Optional[str] = None
-    description: Optional[str] = None
+    label: str | None = None
+    description: str | None = None
     type_id: int
-    location_id: Optional[int] = None
-    display_order: Optional[int] = None
-    configs: Optional[List[CaseFieldConfig]] = None
-    is_active: Optional[bool] = None
-    is_required: Optional[bool] = None
-    is_global: Optional[bool] = None
-    is_system: Optional[bool] = None
-    entity_id: Optional[int] = None
-    template_ids: Optional[List[int]] = None
-    include_all: Optional[bool] = None
+    location_id: int | None = None
+    display_order: int | None = None
+    configs: list[CaseFieldConfig] | None = None
+    is_active: bool | None = None
+    is_required: bool | None = None
+    is_global: bool | None = None
+    is_system: bool | None = None
+    entity_id: int | None = None
+    template_ids: list[int] | None = None
+    include_all: bool | None = None
 
 
 class CaseFieldsResponse(BaseModel):
     """Response for get_case_fields endpoint"""
-    fields: List[CaseField] = Field(default_factory=list)
+    fields: list[CaseField] = Field(default_factory=list)
     count: int = 0
 
 
@@ -41,30 +41,29 @@ class CaseType(BaseModel):
     """TestRail Case Type schema"""
     id: int
     name: str
-    is_default: Optional[bool] = None
+    is_default: bool | None = None
 
 
 class CaseTypesResponse(BaseModel):
     """Response for get_case_types endpoint"""
-    types: List[CaseType] = Field(default_factory=list, alias="case_types")
+    model_config = ConfigDict(populate_by_name=True)
+
+    types: list[CaseType] = Field(default_factory=list, alias="case_types")
     count: int = 0
-    
-    class Config:
-        populate_by_name = True
 
 
 class Priority(BaseModel):
     """TestRail Priority schema"""
     id: int
     name: str
-    priority: Optional[int] = None
-    short_name: Optional[str] = None
-    is_default: Optional[bool] = None
+    priority: int | None = None
+    short_name: str | None = None
+    is_default: bool | None = None
 
 
 class PrioritiesResponse(BaseModel):
     """Response for get_priorities endpoint"""
-    priorities: List[Priority] = Field(default_factory=list)
+    priorities: list[Priority] = Field(default_factory=list)
     count: int = 0
 
 
@@ -72,10 +71,10 @@ class Template(BaseModel):
     """TestRail Template schema"""
     id: int
     name: str
-    is_default: Optional[bool] = None
+    is_default: bool | None = None
 
 
 class TemplatesResponse(BaseModel):
     """Response for get_templates endpoint"""
-    templates: List[Template] = Field(default_factory=list)
+    templates: list[Template] = Field(default_factory=list)
     count: int = 0

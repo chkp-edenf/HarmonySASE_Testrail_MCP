@@ -1,6 +1,5 @@
 """Configuration-related schemas"""
 
-from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -16,7 +15,7 @@ class ConfigGroup(BaseModel):
     id: int
     name: str
     project_id: int
-    configs: List[Config] = Field(default_factory=list)
+    configs: list[Config] = Field(default_factory=list)
 
 
 class GetConfigsInput(BaseModel):

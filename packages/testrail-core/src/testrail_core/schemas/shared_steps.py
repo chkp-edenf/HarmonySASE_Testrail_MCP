@@ -4,7 +4,7 @@ Shared Steps require TestRail 7.0+; step history requires 7.3+.
 """
 
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .common import PaginatedResponse
 
@@ -64,13 +64,12 @@ class SharedStepDetailPayload(BaseModel):
 
 class AddSharedStepPayload(BaseModel):
     """Payload for creating a new set of shared steps"""
+    model_config = ConfigDict(populate_by_name=True)
+
     title: str = Field(..., description="The title for the set of steps (required)")
     custom_steps_separated: list[SharedStepDetailPayload] | None = Field(
         None, description="Array of step objects. Each object contains content/additional_info/expected/refs."
     )
-
-    class Config:
-        populate_by_name = True
 
 
 class UpdateSharedStepPayload(BaseModel):
@@ -79,10 +78,9 @@ class UpdateSharedStepPayload(BaseModel):
     Submitting custom_steps_separated REPLACES all existing steps — send the
     complete array.
     """
+    model_config = ConfigDict(populate_by_name=True)
+
     title: str | None = Field(None, description="The title for the set of steps")
     custom_steps_separated: list[SharedStepDetailPayload] | None = Field(
         None, description="Array of step objects. REPLACES all existing steps — send the complete list."
     )
-
-    class Config:
-        populate_by_name = True
